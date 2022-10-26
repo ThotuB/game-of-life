@@ -27,17 +27,17 @@ A starved or full cell seeks food and if it doesn't find it it in at least T_Sta
 4. There is an upper bound of threads that can be created at any time.
 5. There will be at least 10 food units at the beginning of each game.
 6. There will be real-time output:
-```log
+```
     [m:s:ms] cell #??? dies
     [m:s:ms] cell #??? eats food #???
     [m:s:ms] cells #??? and #??? reproduce -> cell #???
     ...
 ```
-7. Progress will be able to be saved in case of a long simulation
+1. Progress will be able to be saved in case of a long simulation
 
 ## Entities
 
-```json
+```
 Entity
 |-- Cell: Entity
 |   |-- Sexuate Cell: Cell
@@ -48,7 +48,7 @@ Game
 
 ## Collections
 
-```json
+```
 Game
 |-- Sexuate Cells: ArrayList<Sexuate Cell>
 |-- Asexuate Cells: ArrayList<Asexuate Cell>
