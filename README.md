@@ -33,7 +33,7 @@ A starved or full cell seeks food and if it doesn't find it it in at least T_Sta
     [m:s:ms] cells #??? and #??? reproduce -> cell #???
     ...
 ```
-1. Progress will be able to be saved in case of a long simulation
+7. Progress will be able to be saved in case of a long simulation
 
 ## Entities
 
