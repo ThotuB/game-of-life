@@ -19,21 +19,25 @@ An asexuate cell reproduces by division, resulting in two hungry cells.
 The food is limited.
 A starved or full cell seeks food and if it doesn't find it it in at least T_Starve, it dies, spawning randomly 1 to 5 food units.
 
+**5. Game**
+Keeps track of the cells and food.
+It simulates the interactions between the cells and the food (cell reproduction and eating).
+
 ## Non Functional Components
 
-1. The system should be able to maintain a number of cells at the same time.
-2. The system should be able to decide what happens if a cell finds a mate that found another mate.
-3. If two cells eat the same food then one thread will lock and the other one will wait.
-4. There is an upper bound of threads that can be created at any time.
-5. There will be at least 10 food units at the beginning of each game.
-6. There will be real-time output:
+* The system should be able to maintain a number of cells at the same time.
+* The system should be able to decide what happens if a cell finds a mate that found another mate.
+* If two cells eat the same food then one thread will lock and the other one will wait.
+* There is an upper bound of threads that can be created at any time.
+* There will be at least 10 food units at the beginning of each game.
+* There will be real-time output:
 ```
     [m:s:ms] cell #??? dies
     [m:s:ms] cell #??? eats food #???
     [m:s:ms] cells #??? and #??? reproduce -> cell #???
     ...
 ```
-7. Progress will be able to be saved in case of a long simulation
+* Progress will be able to be saved in case of a long simulation
 
 ## Entities
 
