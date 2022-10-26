@@ -3,25 +3,25 @@
 ## Functional Components
 
 **1. Cell Generalities**
-Cells can be of two types: ***sexuate & asexuate***.
-They seek to eat and reproduce.
-All cells start as full and after a time T_Full they become starved.
-If a cell eats at least 10 times it reproduces, then becomes hungry again.
-Each cell is a separate thread.
+* Cells can be of two types: ***sexuate & asexuate***.
+* They seek to eat and reproduce.
+* All cells start as full and after a time T_Full they become starved.
+* If a cell eats at least 10 times it reproduces, then becomes hungry again.
+* Each cell is a separate thread.
 
 **2. Sexuate cells**
-A sexuate cell reproduces with another sexuate cell, resulting in a third hungry cell.
+* A sexuate cell reproduces with another sexuate cell, resulting in a third hungry cell.
 
 **3. Asexuate cells**
-An asexuate cell reproduces by division, resulting in two hungry cells.
+* An asexuate cell reproduces by division, resulting in two hungry cells.
 
 **4. Food**
-The food is limited.
-A starved or full cell seeks food and if it doesn't find it it in at least T_Starve, it dies, spawning randomly 1 to 5 food units.
+* The food is limited.
+* A starved or full cell seeks food and if it doesn't find it it in at least T_Starve, it dies, spawning randomly 1 to 5 food units.
 
 **5. Game**
-Keeps track of the cells and food.
-It simulates the interactions between the cells and the food (cell reproduction and eating).
+* Keeps track of the cells and food.
+* It simulates the interactions between the cells and the food (cell reproduction and eating).
 
 ## Non Functional Components
 
