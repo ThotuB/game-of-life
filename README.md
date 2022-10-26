@@ -58,3 +58,7 @@ Game
 |-- Asexuate Cells: ArrayList<Asexuate Cell>
 |-- Food: ArrayList<Food>
 ```
+
+## Diagram
+
+<img src="./diagram.svg" />
