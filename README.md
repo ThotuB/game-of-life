@@ -61,4 +61,6 @@ Game
 
 ## Diagram
 
-<img src="./diagram.svg" />
+<div style="background-color: #ffffff">
+    <img src="./diagram.svg" />
+</div>
