@@ -1,3 +1,5 @@
+package game;
+
 public class Food extends Entity {
     public Food() {
         super();
