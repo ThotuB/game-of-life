@@ -1,6 +1,7 @@
 package game;
 
 import java.util.ArrayList;
+import java.util.Random;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.*;
 
@@ -63,9 +64,8 @@ public class Game {
 
     public Food eat(Cell cell, int foodId) {
         Food food = null;
-        foodLock.lock();
-        try {
-            // Check if food exists
+
+//             Check if food exists
 //             Optional<Food> food = this.foods.stream()
 //                 .filter(f -> f.getId() == foodId)
 //                 .findFirst();
@@ -79,18 +79,23 @@ public class Game {
 //                 ate = true;
 //                 numFood--;
 //             }
-            if (foods.size() > foodId) {
-                food = foods.get(foodId);
+        if (foods.size() > foodId) {
+            food = foods.get(foodId);
+            foodLock.lock();
+
+            try {
                 foods.remove(foodId);
                 numFood--;
             }
+            catch(Exception e) {
+                food = null;
+            }
+            finally {
+                foodLock.unlock();
+            }
         }
-        finally {
-            foodLock.unlock();
-        }
-
-        return food;
-    }
+    return food;
+}
 
     //region Cell Count Methods
     private void decrementCellCount(Cell cell) {
@@ -173,6 +178,11 @@ public class Game {
 
     public int getTimeStarve() { return TIME_STARVE; }
     public int getTimeFull() { return TIME_FULL; }
+    public ArrayList<Food> getFoodsArray() {
+        if (foods.size() > 0)
+            return foods;
+        else return null;
+    }
 
     @Override
     public String toString() {
