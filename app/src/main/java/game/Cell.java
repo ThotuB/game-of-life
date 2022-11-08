@@ -1,6 +1,8 @@
 package game;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.google.common.base.Stopwatch;
 
@@ -62,7 +64,7 @@ public abstract class Cell extends Entity implements Runnable {
     private void tryEat() {
         float roll = (float) Math.random();
 
-        if (roll > 1.0E-7) return;
+        if (roll > 1.0E-6) return;
 
         eat();
     }
@@ -125,19 +127,37 @@ public abstract class Cell extends Entity implements Runnable {
 }
 
 class SexuateCell extends Cell {
-    public SexuateCell(Game game) {
+    private MatingQueue matingQueue;
+    public SexuateCell(Game game, MatingQueue matingQueue) {
         super(game);
+        this.matingQueue = matingQueue;
     }
 
-    public SexuateCell(Game game, State state) {
+    public SexuateCell(Game game, MatingQueue matingQueue, State state) {
         super(game, state);
+        this.matingQueue = matingQueue;
     }
 
     @Override
     public boolean reproduce() {
-        var cell = new SexuateCell(game, State.STARVING);
-        Logger.log(this + " is reproducing -> " + cell);
-        game.spawnCell(cell);
+        matingQueue.reproduceLock.lock();
+        try{
+            if (matingQueue.getSizeOfReproducingList() == 0) {
+                Logger.log(this + " is waiting for a mate");
+                if (! matingQueue.cellAlreadyExistsInReproducingList(this))
+                    matingQueue.addCellToReproducingList(this);
+                return false;
+            }
+            if (! matingQueue.cellAlreadyExistsInReproducingList(this)) {
+                SexuateCell reproducedCell = matingQueue.popFirstCellFromReproducingList();
+                var cell = new SexuateCell(game, matingQueue, State.STARVING);
+                Logger.log(this + " has reproduced with " + reproducedCell + " -> " + cell);
+                game.spawnCell(cell);
+            }
+        }
+        finally {
+            matingQueue.reproduceLock.unlock();
+        }
         return true;
     }
 }

@@ -1,7 +1,6 @@
 package game;
 
 import java.util.ArrayList;
-import java.util.Optional;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.*;
 
@@ -29,10 +28,9 @@ public class Game {
     private int numSexuateCells;
     private int numAsexuateCells;
     private ArrayList<Cell> cells;
-
     private int numFood;
     private ArrayList<Food> foods;
-
+    private MatingQueue matingQueue = new MatingQueue();
     // Concurrency
     ExecutorService executor = Executors.newCachedThreadPool();
     private final Lock cellLock = new ReentrantLock();
@@ -46,9 +44,8 @@ public class Game {
         this.numSexuateCells = config.numSexuateCells;
         this.numAsexuateCells = config.numAsexualCells;
         this.cells = new ArrayList<Cell>(numSexuateCells + numAsexuateCells);
-
         for (int i = 0; i < numSexuateCells; i++) {
-            cells.add(new SexuateCell(this));
+            cells.add(new SexuateCell(this, matingQueue));
         }
 
         for (int i = 0; i < numAsexuateCells; i++) {
@@ -131,7 +128,12 @@ public class Game {
 
     public void killCell(Cell cell) {
         cellLock.lock();
+        matingQueue.reproduceLock.lock();
         try {
+            if (cell instanceof SexuateCell && matingQueue.cellAlreadyExistsInReproducingList((SexuateCell) cell)) {
+                Logger.log(cell + " couldn't find a mate before its doom :(");
+                matingQueue.removeCell((SexuateCell) cell);
+            }
             cells.remove(cell);
             Logger.log(cell + " died (\u001B[31m" + cells.size() + " left\u001B[0m)");
             decrementCellCount(cell);
@@ -142,6 +144,7 @@ public class Game {
         }
         finally {
             cellLock.unlock();
+            matingQueue.reproduceLock.unlock();
         }
 
         foodLock.lock();
