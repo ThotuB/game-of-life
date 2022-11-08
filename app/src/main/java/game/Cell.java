@@ -1,5 +1,7 @@
 package game;
 
+import java.util.ArrayList;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -51,7 +53,16 @@ public abstract class Cell extends Entity implements Runnable {
     }
 
     private void eat() {
-        Food food = game.eat(this, 0);
+        Food food = null;
+        ArrayList<Food> foods = game.getFoodsArray();
+
+        if (foods != null) {
+            int randomFood = new Random().nextInt(0, foods.size());
+            food = game.eat(this, randomFood);
+        }
+        else {
+            Logger.log(this + " could not find any food");
+        }
 
         if (food != null) {
             foodConsumed++;
@@ -59,6 +70,7 @@ public abstract class Cell extends Entity implements Runnable {
 
             satiateCell();
         }
+
     }
 
     private void tryEat() {

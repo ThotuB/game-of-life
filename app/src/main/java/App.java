@@ -7,7 +7,7 @@ public class App {
             3,
             20,
             0,
-            202
+            22
         );
 
         Game game = new Game(config);
