@@ -64,8 +64,8 @@ public class Game {
         }
     }
 
-    public boolean eat(Cell cell, int foodId) {
-        boolean ate = false;
+    public Food eat(Cell cell, int foodId) {
+        Food food = null;
         foodLock.lock();
         try {
             // Check if food exists
@@ -83,9 +83,8 @@ public class Game {
 //                 numFood--;
 //             }
             if (foods.size() > foodId) {
-                Logger.log(cell + " ate " + foods.get(foodId));
+                food = foods.get(foodId);
                 foods.remove(foodId);
-                ate = true;
                 numFood--;
             }
         }
@@ -93,7 +92,7 @@ public class Game {
             foodLock.unlock();
         }
 
-        return ate;
+        return food;
     }
 
     //region Cell Count Methods
@@ -164,12 +163,6 @@ public class Game {
 
         for (Cell cell : cells) {
             executor.execute(cell);
-        }
-
-        try {
-            executor.awaitTermination(2, TimeUnit.MINUTES);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
         }
         
         System.out.println("--- Simulation ---");

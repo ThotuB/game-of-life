@@ -5,8 +5,8 @@ import java.util.concurrent.TimeUnit;
 import com.google.common.base.Stopwatch;
 
 public abstract class Cell extends Entity implements Runnable {
-    private Stopwatch stopwatch = Stopwatch.createUnstarted();
     protected Game game;
+    private Stopwatch stopwatch = Stopwatch.createUnstarted();
     private int foodConsumed = 0;
 
     public enum State {
@@ -15,6 +15,7 @@ public abstract class Cell extends Entity implements Runnable {
 
     protected State state;
 
+    // Constructor
     public Cell(Game game) {
         super();
         this.game = game;
@@ -27,7 +28,7 @@ public abstract class Cell extends Entity implements Runnable {
         this.state = state;
     }
 
-    public void restartStopwatch() {
+    private void restartStopwatch() {
         stopwatch.reset();
         stopwatch.start();
     }
@@ -47,17 +48,18 @@ public abstract class Cell extends Entity implements Runnable {
         return foodConsumed >= 10;
     }
 
-    public void eat() {
-        boolean ate = game.eat(this, 0);
+    private void eat() {
+        Food food = game.eat(this, 0);
 
-        if (ate) {
+        if (food != null) {
             foodConsumed++;
+            Logger.log(this + " ate " + food + " (\u001B[32m" + foodConsumed + "\u001B[0m)");
 
             satiateCell();
         }
     }
 
-    public void tryEat() {
+    private void tryEat() {
         float roll = (float) Math.random();
 
         if (roll > 1.0E-7) return;
@@ -65,9 +67,9 @@ public abstract class Cell extends Entity implements Runnable {
         eat();
     }
 
-    public abstract boolean reproduce();
+    protected abstract boolean reproduce();
 
-    public void tryReproduce() {
+    private void tryReproduce() {
         if (!canReproduce()) return;
 
         float roll = (float) Math.random();
@@ -82,7 +84,7 @@ public abstract class Cell extends Entity implements Runnable {
         }
     }
 
-    public void die() {
+    private void die() {
         game.killCell(this);
     }
 
@@ -152,7 +154,7 @@ class AsexuateCell extends Cell {
     @Override
     public boolean reproduce() {
         var cell = new AsexuateCell(game, State.STARVING);
-        Logger.log(this + " is reproducing -> " + cell);
+        Logger.log(this + " is dividing -> " + cell);
         game.spawnCell(cell);
         return true;
     }

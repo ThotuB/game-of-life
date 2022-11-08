@@ -5,7 +5,7 @@ public class App {
         Game.Config config = new Game.Config(
             2,
             3,
-            2,
+            200,
             2,
             20
         );
