@@ -1,17 +1,54 @@
 package game;
 
-import java.util.ArrayList;
-import java.util.Random;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import com.google.common.base.Stopwatch;
 
 public abstract class Cell extends Entity implements Runnable {
-    protected Game game;
-    private Stopwatch stopwatch = Stopwatch.createUnstarted();
+    public static final class Config {
+        public final float eatChance; // 0.005 - 0.03
+        public final float reproduceChance; // 0.005 - 0.03
+
+        public final int foodPerReproduce; // 5 - 15
+
+        public final int timeStarve; // 2 - 5
+        public final int timeFull; // 2 - 8
+
+
+        public Config(
+                float eatChance,
+                float reproduceChance,
+                int foodPerReproduce,
+                int timeStarve,
+                int timeFull) {
+            this.eatChance = eatChance;
+            this.reproduceChance = reproduceChance;
+
+            this.foodPerReproduce = foodPerReproduce;
+
+            this.timeStarve = timeStarve;
+            this.timeFull = timeFull;
+        }
+
+        public static Config random() {
+            float eatChance = Generate.randomFloat(0.005f, 0.03f);
+            float reproduceChance = Generate.randomFloat(0.005f, 0.03f);
+
+            int foodPerReproduce = Generate.randomInt(5, 15);
+
+            int timeStarve = Generate.randomInt(2, 5);
+            int timeFull = Generate.randomInt(2, 8);
+
+            return new Config(eatChance, reproduceChance, foodPerReproduce, timeStarve, timeFull);
+        }
+    }
+
+    protected final Game game;
+    private final Stopwatch stopwatch = Stopwatch.createUnstarted();
+    private final Stopwatch tick = Stopwatch.createUnstarted();
     private int foodConsumed = 0;
+
+    protected final Config config;
 
     public enum State {
         FULL, STARVING, DEAD
@@ -20,21 +57,28 @@ public abstract class Cell extends Entity implements Runnable {
     protected State state;
 
     // Constructor
-    public Cell(Game game) {
+    public Cell(Game game, Config config) {
         super();
         this.game = game;
+        this.config = config;
         this.state = State.FULL;
     }
 
-    public Cell(Game game, State state) {
+    public Cell(Game game, Config config, State state) {
         super();
         this.game = game;
+        this.config = config;
         this.state = state;
     }
 
     private void restartStopwatch() {
         stopwatch.reset();
         stopwatch.start();
+    }
+
+    private void restartTick() {
+        tick.reset();
+        tick.start();
     }
 
     private void starveCell() {
@@ -49,75 +93,68 @@ public abstract class Cell extends Entity implements Runnable {
     }
 
     private boolean canReproduce() {
-        return foodConsumed >= 10;
+        return foodConsumed >= config.foodPerReproduce;
     }
 
     private void eat() {
-        Food food = null;
-        ArrayList<Food> foods = game.getFoodsArray();
+        Food food = game.eat(this);
 
-        if (foods != null) {
-            int randomFood = new Random().nextInt(0, foods.size());
-            food = game.eat(this, randomFood);
-        }
-        else {
-            Logger.log(this + " could not find any food");
-        }
+        if (food == null)
+            return;
 
-        if (food != null) {
-            foodConsumed++;
-            Logger.log(this + " ate " + food + " (\u001B[32m" + foodConsumed + "\u001B[0m)");
+        foodConsumed++;
+        Logger.log(this + " ate " + food + " (\u001B[32m" + foodConsumed + "\u001B[0m)");
 
-            satiateCell();
-        }
-
+        satiateCell();
     }
 
     private void tryEat() {
         float roll = (float) Math.random();
 
-        if (roll > 1.0E-6) return;
+        if (roll > config.eatChance)
+            return;
 
         eat();
     }
 
-    protected abstract boolean reproduce();
+    protected void reproduce() {
+        foodConsumed = 0;
+        starveCell();
+    }
 
     private void tryReproduce() {
-        if (!canReproduce()) return;
+        if (!canReproduce())
+            return;
 
         float roll = (float) Math.random();
 
-        if (roll > 1.0E-7) return;
+        if (roll > config.reproduceChance)
+            return;
 
-        boolean hasReproduced = reproduce();
-
-        if (hasReproduced) {
-            foodConsumed = 0;
-            starveCell();
-        }
+        reproduce();
     }
 
-    private void die() {
+    protected void die() {
         game.killCell(this);
     }
 
     @Override
     public void run() {
         Logger.log(this + " is living");
-        
+
         stopwatch.start();
+        tick.start();
 
         while (true) {
             // Handle cell state
             switch (state) {
                 case FULL:
-                    if (stopwatch.elapsed(TimeUnit.SECONDS) >= game.getTimeFull()) {
+                    if (stopwatch.elapsed(TimeUnit.SECONDS) >= config.timeFull) {
                         starveCell();
                     }
                     break;
                 case STARVING:
-                    if (stopwatch.elapsed(TimeUnit.SECONDS) >= game.getTimeStarve()) {
+                    if (stopwatch.elapsed(TimeUnit.SECONDS) >= config.timeStarve) {
                         state = State.DEAD;
                     }
                     break;
@@ -127,8 +164,11 @@ public abstract class Cell extends Entity implements Runnable {
             }
 
             // Handle cell actions
-            tryEat();
-            tryReproduce();
+            if (tick.elapsed(TimeUnit.MILLISECONDS) >= 100) {
+                tryEat();
+                tryReproduce();
+                restartTick();
+            }
         }
     }
 
@@ -136,58 +176,84 @@ public abstract class Cell extends Entity implements Runnable {
     public String toString() {
         return "Cell #" + id;
     }
+
+    public void printDetails() {
+        System.out.println("  - Eat chance: " + String.format("%.3f", config.eatChance));
+        System.out.println("  - Reproduce chance: " + String.format("%.3f", config.reproduceChance));
+        System.out.println("  - Food per reproduce: " + config.foodPerReproduce);
+        System.out.println("  - Time starve: " + config.timeStarve);
+        System.out.println("  - Time full: " + config.timeFull);
+    }
 }
 
 class SexuateCell extends Cell {
     private MatingQueue matingQueue;
-    public SexuateCell(Game game, MatingQueue matingQueue) {
-        super(game);
+
+    public SexuateCell(Game game, Config config, MatingQueue matingQueue) {
+        super(game, config);
         this.matingQueue = matingQueue;
     }
 
-    public SexuateCell(Game game, MatingQueue matingQueue, State state) {
-        super(game, state);
+    public SexuateCell(Game game, Config config, MatingQueue matingQueue, State state) {
+        super(game, config, state);
         this.matingQueue = matingQueue;
     }
 
     @Override
-    public boolean reproduce() {
-        matingQueue.reproduceLock.lock();
-        try{
-            if (matingQueue.getSizeOfReproducingList() == 0) {
-                Logger.log(this + " is waiting for a mate");
-                if (! matingQueue.cellAlreadyExistsInReproducingList(this))
-                    matingQueue.addCellToReproducingList(this);
-                return false;
-            }
-            if (! matingQueue.cellAlreadyExistsInReproducingList(this)) {
-                SexuateCell reproducedCell = matingQueue.popFirstCellFromReproducingList();
-                var cell = new SexuateCell(game, matingQueue, State.STARVING);
-                Logger.log(this + " has reproduced with " + reproducedCell + " -> " + cell);
-                game.spawnCell(cell);
-            }
+    public void reproduce() {
+        SexuateCell partner = matingQueue.findPartner(this);
+
+        if (partner == null) {
+            Logger.log(this + " waiting for a partner");
+            return;
         }
-        finally {
-            matingQueue.reproduceLock.unlock();
+        if (partner == this) {
+            return;
         }
-        return true;
+
+        var child = new SexuateCell(game, Config.random(), matingQueue, State.STARVING);
+
+        Logger.log(this + " and " + partner + " reproducing -> " + child);
+        game.spawnCell(child);
+
+        super.reproduce();
+    }
+
+    @Override
+    protected void die() {
+        super.die();
+        matingQueue.tryRemove(this);
+    }
+
+    @Override
+    public void printDetails() {
+        System.out.println("SexuateCell #" + id);
+        super.printDetails();
     }
 }
 
 class AsexuateCell extends Cell {
-    public AsexuateCell(Game game) {
-        super(game);
+    public AsexuateCell(Game game, Config config) {
+        super(game, config);
     }
 
-    public AsexuateCell(Game game, State state) {
-        super(game, state);
+    public AsexuateCell(Game game, Config config, State state) {
+        super(game, config, state);
     }
 
     @Override
-    public boolean reproduce() {
-        var cell = new AsexuateCell(game, State.STARVING);
+    public void reproduce() {
+        var cell = new AsexuateCell(game, Config.random(), State.STARVING);
+
         Logger.log(this + " is dividing -> " + cell);
         game.spawnCell(cell);
-        return true;
+
+        super.reproduce();
+    }
+
+    @Override
+    public void printDetails() {
+        System.out.println("AsexuateCell #" + id);
+        super.printDetails();
     }
 }

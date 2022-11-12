@@ -1,31 +1,51 @@
 package game;
 
-import java.util.ArrayList;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class MatingQueue {
-    public final Lock reproduceLock = new ReentrantLock();
-    private ArrayList<SexuateCell> reproducingCells;
+    private SexuateCell mate;
+    private final Lock lock = new ReentrantLock();
+
     public MatingQueue() {
-        reproducingCells = new ArrayList<>();
-    }
-    public void removeCell(SexuateCell cell) {
-        reproducingCells.remove(cell);
-    }
-    public void addCellToReproducingList(SexuateCell sexuateCell) {
-        reproducingCells.add(sexuateCell);
-    }
-    public SexuateCell popFirstCellFromReproducingList() {
-        SexuateCell cell = reproducingCells.get(0);
-        reproducingCells.remove(0);
-        return cell;
-    }
-    public boolean cellAlreadyExistsInReproducingList(SexuateCell cell) {
-        return reproducingCells.contains(cell);
-    }
-    public int getSizeOfReproducingList() {
-        return reproducingCells.size();
     }
 
+    private void set(SexuateCell cell) {
+        lock.lock();
+        try {
+            this.mate = cell;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    private SexuateCell get() {
+        lock.lock();
+        try {
+            SexuateCell mate = this.mate;
+            this.mate = null;
+            return mate;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public SexuateCell findPartner(SexuateCell cell) {
+        if (mate == null) {
+            set(cell);
+            return null;
+        }
+
+        if (mate == cell) {
+            return cell;
+        }
+
+        return get();
+    }
+
+    public void tryRemove(SexuateCell cell) {
+        if (mate == cell) {
+            get();
+        }
+    }
 }

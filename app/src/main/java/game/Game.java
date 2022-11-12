@@ -1,123 +1,112 @@
 package game;
 
 import java.util.ArrayList;
-import java.util.Random;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.*;
 
 public class Game {
     public static final class Config {
-        public int timeStarve = 3;
-        public int timeFull = 5;
+        public final int numSexuateCells;
+        public final int numAsexuateCells;
+        public final int numFood;
 
-        public int numSexuateCells = 5;
-        public int numAsexualCells = 5;
-        public int numFood = 40;
-
-        public Config(int timeStarve, int timeFull, int numSexuateCells, int numAsexualCells, int numFood) {
-            this.timeStarve = timeStarve;
-            this.timeFull = timeFull;
+        public Config(
+                int numSexuateCells,
+                int numAsexuateCells,
+                int numFood) {
             this.numSexuateCells = numSexuateCells;
-            this.numAsexualCells = numAsexualCells;
+            this.numAsexuateCells = numAsexuateCells;
             this.numFood = numFood;
         }
     }
 
-    private final int TIME_STARVE;
-    private final int TIME_FULL;
+    public final class Statistics {
+        public int numSexuateCells;
+        public int numAsexuateCells;
+        public int numFood;
 
-    private int numSexuateCells;
-    private int numAsexuateCells;
+        public Statistics(int numSexuateCells, int numAsexuateCells, int numFood) {
+            this.numSexuateCells = numSexuateCells;
+            this.numAsexuateCells = numAsexuateCells;
+            this.numFood = numFood;
+        }
+    }
+
     private ArrayList<Cell> cells;
-    private int numFood;
     private ArrayList<Food> foods;
-    private MatingQueue matingQueue = new MatingQueue();
+
+    public final Statistics statistics;
+
     // Concurrency
+    private MatingQueue matingQueue = new MatingQueue();
     ExecutorService executor = Executors.newCachedThreadPool();
     private final Lock cellLock = new ReentrantLock();
     private final Lock foodLock = new ReentrantLock();
 
     public Game(Config config) {
-        this.TIME_STARVE = config.timeStarve;
-        this.TIME_FULL = config.timeFull;
+        // Statistics
+        this.statistics = new Statistics(
+                config.numSexuateCells,
+                config.numAsexuateCells,
+                config.numFood
+        );
 
         // Create cells
-        this.numSexuateCells = config.numSexuateCells;
-        this.numAsexuateCells = config.numAsexualCells;
-        this.cells = new ArrayList<Cell>(numSexuateCells + numAsexuateCells);
-        for (int i = 0; i < numSexuateCells; i++) {
-            cells.add(new SexuateCell(this, matingQueue));
+        this.cells = new ArrayList<Cell>(statistics.numSexuateCells + statistics.numAsexuateCells);
+
+        for (int i = 0; i < statistics.numSexuateCells; i++) {
+            cells.add(new SexuateCell(this, Cell.Config.random(), matingQueue));
         }
 
-        for (int i = 0; i < numAsexuateCells; i++) {
-            cells.add(new AsexuateCell(this));
+        for (int i = 0; i < statistics.numAsexuateCells; i++) {
+            cells.add(new AsexuateCell(this, Cell.Config.random()));
         }
 
         // Create food
-        this.numFood = config.numFood;
-        this.foods = new ArrayList<Food>(numFood);
+        this.foods = new ArrayList<Food>(statistics.numFood);
 
-        for (int i = 0; i < numFood; i++) {
+        for (int i = 0; i < statistics.numFood; i++) {
             foods.add(new Food());
         }
     }
 
-    public Food eat(Cell cell, int foodId) {
-        Food food = null;
+    public Food eat(Cell cell) {
+        foodLock.lock();
+        try {
+            if (foods.isEmpty()) {
+                return null;
+            }
 
-//             Check if food exists
-//             Optional<Food> food = this.foods.stream()
-//                 .filter(f -> f.getId() == foodId)
-//                 .findFirst();
-// 
-//             // If food exists, remove it from the list
-//             food.ifPresent(f -> {
-//                 this.foods.remove(f);
-//             });
-// 
-//             if (food.isPresent()) {
-//                 ate = true;
-//                 numFood--;
-//             }
-        if (foods.size() > foodId) {
-            food = foods.get(foodId);
-            foodLock.lock();
+            Food food = foods.remove(getRandomFood());
+            statistics.numFood--;
 
-            try {
-                foods.remove(foodId);
-                numFood--;
-            }
-            catch(Exception e) {
-                food = null;
-            }
-            finally {
-                foodLock.unlock();
-            }
+            return food;
+        } catch (Exception e) {
+            return null;
+        } finally {
+            foodLock.unlock();
         }
-    return food;
-}
+    }
 
-    //region Cell Count Methods
+    // region Cell Count Methods
     private void decrementCellCount(Cell cell) {
         if (cell instanceof SexuateCell) {
-            numSexuateCells--;
-        }
-        else if (cell instanceof AsexuateCell) {
-            numAsexuateCells--;
+            statistics.numSexuateCells--;
+        } else if (cell instanceof AsexuateCell) {
+            statistics.numAsexuateCells--;
         }
     }
 
     private void incrementCellCount(Cell cell) {
         if (cell instanceof SexuateCell) {
-            numSexuateCells++;
-        }
-        else if (cell instanceof AsexuateCell) {
-            numAsexuateCells++;
+            statistics.numSexuateCells++;
+        } else if (cell instanceof AsexuateCell) {
+            statistics.numAsexuateCells++;
         }
     }
-    //endregion
+    // endregion
 
-    //region Cell Lifecycle Methods
+    // region Cell Lifecycle Methods
     public void spawnCell(Cell cell) {
         cellLock.lock();
         try {
@@ -125,46 +114,43 @@ public class Game {
             incrementCellCount(cell);
 
             executor.execute(cell);
-        }
-        finally {
+        } finally {
             cellLock.unlock();
         }
     }
 
     public void killCell(Cell cell) {
+        // Remove cell from list
+        int numFoodSpawn = (int) (Math.random() * 4 + 1);
+
         cellLock.lock();
-        matingQueue.reproduceLock.lock();
         try {
-            if (cell instanceof SexuateCell && matingQueue.cellAlreadyExistsInReproducingList((SexuateCell) cell)) {
-                Logger.log(cell + " couldn't find a mate before its doom :(");
-                matingQueue.removeCell((SexuateCell) cell);
-            }
             cells.remove(cell);
-            Logger.log(cell + " died (\u001B[31m" + cells.size() + " left\u001B[0m)");
+            Logger.log(cell + " died (\u001B[31m" + cells.size() + " left\u001B[0m) -> +" + numFoodSpawn + " food");
             decrementCellCount(cell);
-
-            if (cells.isEmpty()) {
-                executor.shutdown();
-            }
-        }
-        finally {
+        } finally {
             cellLock.unlock();
-            matingQueue.reproduceLock.unlock();
         }
 
+        // Stop simulation if no cells left
+        if (cells.isEmpty()) {
+            executor.shutdown();
+            cell.printDetails();
+            return;
+        }
+
+        // Spawn food
         foodLock.lock();
         try {
-            int numFoodSpawn = (int) (Math.random() * 4 + 1);
             for (int i = 0; i < numFoodSpawn; i++) {
                 foods.add(new Food());
-                numFood++;
+                statistics.numFood++;
             }
-        }
-        finally {
+        } finally {
             foodLock.unlock();
         }
     }
-    //endregion
+    // endregion
 
     public void simulate() {
         System.out.println("--- Simulation ---");
@@ -172,25 +158,19 @@ public class Game {
         for (Cell cell : cells) {
             executor.execute(cell);
         }
-        
-        System.out.println("--- Simulation ---");
     }
 
-    public int getTimeStarve() { return TIME_STARVE; }
-    public int getTimeFull() { return TIME_FULL; }
-    public ArrayList<Food> getFoodsArray() {
-        if (foods.size() > 0)
-            return foods;
-        else return null;
+    public int getRandomFood() {
+        return (int) (Math.random() * foods.size());
     }
 
     @Override
     public String toString() {
         return "Game:"
-            + "\n  numSexuateCells=" + numSexuateCells
-            + "\n  numAsexuateCells=" + numAsexuateCells
-            + "\n  cells=" + cells
-            + "\n  numFood=" + numFood
-            + "\n  foods=" + foods;
+                + "\n  numSexuateCells=" + statistics.numSexuateCells
+                + "\n  numAsexuateCells=" + statistics.numAsexuateCells
+                + "\n  cells=" + cells
+                + "\n  numFood=" + statistics.numFood
+                + "\n  foods=" + foods;
     }
 }
