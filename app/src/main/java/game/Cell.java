@@ -103,7 +103,9 @@ public abstract class Cell extends Entity implements Runnable {
             return;
 
         foodConsumed++;
-        Logger.log(this + " ate " + food + " (\u001B[32m" + foodConsumed + "\u001B[0m)");
+        Logger.log(this + " ate " + food
+            + " (\u001B[32m" + foodConsumed + "\u001B[0m /"
+            + " \u001B[32m" + config.foodPerReproduce + "\u001B[0m)");
 
         satiateCell();
     }
