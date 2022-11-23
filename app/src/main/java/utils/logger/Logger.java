@@ -1,4 +1,4 @@
-package game;
+package utils.logger;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;

@@ -1,4 +1,6 @@
-package game;
+package game.entity.food;
+
+import game.entity.Entity;
 
 public class Food extends Entity {
     public Food() {

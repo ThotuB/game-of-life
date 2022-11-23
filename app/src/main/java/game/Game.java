@@ -4,6 +4,13 @@ import java.util.ArrayList;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.*;
 
+import game.entity.cell.AsexuateCell;
+import game.entity.cell.Cell;
+import game.entity.cell.SexuateCell;
+import game.entity.food.Food;
+import utils.logger.Logger;
+import utils.queue.MatingQueue;
+
 public class Game {
     public static final class Config {
         public final int numSexuateCells;

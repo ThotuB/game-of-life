@@ -3,9 +3,9 @@ import game.Game;
 public class App {
     public static void main(String[] args) {
         Game.Config config = new Game.Config(
-            6,
-            6,
-            22
+            10,
+            10,
+            100
         );
 
         Game game = new Game(config);

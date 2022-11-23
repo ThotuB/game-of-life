@@ -1,7 +1,9 @@
-package game;
+package utils.queue;
 
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+
+import game.entity.cell.SexuateCell;
 
 public class MatingQueue {
     private SexuateCell mate;

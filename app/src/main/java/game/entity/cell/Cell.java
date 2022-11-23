@@ -1,8 +1,14 @@
-package game;
+package game.entity.cell;
 
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Stopwatch;
+
+import game.Game;
+import game.entity.Entity;
+import game.entity.food.Food;
+import utils.generator.Generate;
+import utils.logger.Logger;
 
 public abstract class Cell extends Entity implements Runnable {
     public static final class Config {
@@ -13,7 +19,6 @@ public abstract class Cell extends Entity implements Runnable {
 
         public final int timeStarve; // 2 - 5
         public final int timeFull; // 2 - 8
-
 
         public Config(
                 float eatChance,
@@ -166,7 +171,7 @@ public abstract class Cell extends Entity implements Runnable {
             }
 
             // Handle cell actions
-            if (tick.elapsed(TimeUnit.MILLISECONDS) >= 100) {
+            if (tick.elapsed(TimeUnit.MILLISECONDS) >= 50) {
                 tryEat();
                 tryReproduce();
                 restartTick();
@@ -185,77 +190,5 @@ public abstract class Cell extends Entity implements Runnable {
         System.out.println("  - Food per reproduce: " + config.foodPerReproduce);
         System.out.println("  - Time starve: " + config.timeStarve);
         System.out.println("  - Time full: " + config.timeFull);
-    }
-}
-
-class SexuateCell extends Cell {
-    private MatingQueue matingQueue;
-
-    public SexuateCell(Game game, Config config, MatingQueue matingQueue) {
-        super(game, config);
-        this.matingQueue = matingQueue;
-    }
-
-    public SexuateCell(Game game, Config config, MatingQueue matingQueue, State state) {
-        super(game, config, state);
-        this.matingQueue = matingQueue;
-    }
-
-    @Override
-    public void reproduce() {
-        SexuateCell partner = matingQueue.findPartner(this);
-
-        if (partner == null) {
-            Logger.log(this + " waiting for a partner");
-            return;
-        }
-        if (partner == this) {
-            return;
-        }
-
-        var child = new SexuateCell(game, Config.random(), matingQueue, State.STARVING);
-
-        Logger.log(this + " and " + partner + " reproducing -> " + child);
-        game.spawnCell(child);
-
-        super.reproduce();
-    }
-
-    @Override
-    protected void die() {
-        super.die();
-        matingQueue.tryRemove(this);
-    }
-
-    @Override
-    public void printDetails() {
-        System.out.println("SexuateCell #" + id);
-        super.printDetails();
-    }
-}
-
-class AsexuateCell extends Cell {
-    public AsexuateCell(Game game, Config config) {
-        super(game, config);
-    }
-
-    public AsexuateCell(Game game, Config config, State state) {
-        super(game, config, state);
-    }
-
-    @Override
-    public void reproduce() {
-        var cell = new AsexuateCell(game, Config.random(), State.STARVING);
-
-        Logger.log(this + " is dividing -> " + cell);
-        game.spawnCell(cell);
-
-        super.reproduce();
-    }
-
-    @Override
-    public void printDetails() {
-        System.out.println("AsexuateCell #" + id);
-        super.printDetails();
     }
 }
