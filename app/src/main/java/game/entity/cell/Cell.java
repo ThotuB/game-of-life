@@ -102,7 +102,7 @@ public abstract class Cell extends Entity implements Runnable {
     }
 
     private void eat() {
-        Food food = game.eat(this);
+        Food food = game.eat();
 
         if (food == null)
             return;
