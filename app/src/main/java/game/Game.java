@@ -27,7 +27,7 @@ public class Game {
         }
     }
 
-    public final class Statistics {
+    private final class Statistics {
         public int numSexuateCells;
         public int numAsexuateCells;
         public int numFood;
@@ -77,7 +77,7 @@ public class Game {
         }
     }
 
-    public Food eat(Cell cell) {
+    public Food eat() {
         foodLock.lock();
         try {
             if (foods.isEmpty()) {
