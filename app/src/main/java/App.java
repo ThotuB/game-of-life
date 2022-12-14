@@ -27,7 +27,9 @@ public class App {
         ConnectionFactory factory = new ConnectionFactory();
         factory.setHost("localhost");
         Connection connection = factory.newConnection();
+        System.out.println("connection created");
         Channel channel = connection.createChannel();
+        System.out.println("channel created");
 
         channel.queueDeclare("HELLO", false, false, false, null);
         System.out.println(" [*] Waiting for messages. To exit press CTRL+C");
@@ -52,7 +54,13 @@ public class App {
 //
 //        game.simulate();
 
+        System.out.println("Starting message receiver stub");
 
+        try {
+            Receive();
+        } catch (Exception e) {
+            System.out.println("Registering RX handler failed " + e);
+        }
 
     }
 }
