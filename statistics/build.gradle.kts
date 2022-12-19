@@ -18,15 +18,21 @@ repositories {
 
 dependencies {
     // Use JUnit Jupiter for testing.
-    testImplementation("org.junit.jupiter:junit-jupiter:5.7.2")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.9.0")
 
     // This dependency is used by the application.
-    implementation("com.google.guava:guava:30.1.1-jre")
+    implementation("com.google.guava:guava:31.1-jre")
+
+    implementation("com.rabbitmq:amqp-client:5.16.0")
+
+    implementation ("org.slf4j:slf4j-api:2.0.5")
+    implementation ("org.slf4j:slf4j-simple:2.0.5")
+
 }
 
 application {
     // Define the main class for the application.
-    mainClass.set("statistics.App")
+    mainClass.set("App")
 }
 
 tasks.named<Test>("test") {
