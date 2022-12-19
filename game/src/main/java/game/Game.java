@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.*;
 
+import game.client.Client;
 import game.entity.cell.AsexuateCell;
 import game.entity.cell.Cell;
 import game.entity.cell.SexuateCell;
@@ -43,6 +44,7 @@ public class Game {
     private ArrayList<Food> foods;
 
     public final Statistics statistics;
+    public final Client client = new Client();
 
     // Concurrency
     private MatingQueue matingQueue = new MatingQueue();
@@ -55,8 +57,7 @@ public class Game {
         this.statistics = new Statistics(
                 config.numSexuateCells,
                 config.numAsexuateCells,
-                config.numFood
-        );
+                config.numFood);
 
         // Create cells
         this.cells = new ArrayList<Cell>(statistics.numSexuateCells + statistics.numAsexuateCells);
@@ -75,6 +76,10 @@ public class Game {
         for (int i = 0; i < statistics.numFood; i++) {
             foods.add(new Food());
         }
+
+        System.out.println("Game created");
+        client.send("hello", "world");
+        System.out.println("Sent");
     }
 
     public Food eat() {
