@@ -1,14 +1,14 @@
 package game.entity;
 
 public abstract class Entity {
-    protected int id;
+    protected Integer id;
     private static int numEntities = 0;
 
     public Entity() {
         this.id = generateId(this);
     }
 
-    public int getId() {
+    public Integer getId() {
         return id;
     }
 

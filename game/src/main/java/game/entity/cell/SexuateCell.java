@@ -31,7 +31,7 @@ public class SexuateCell extends Cell {
 
         var child = new SexuateCell(game, Config.random(), matingQueue, State.STARVING);
 
-        game.client.send("reproduce-sexuate", this.toString() + " " + partner.toString());
+        game.client.send("reproduce", this.getId().toString());
         Logger.log(this + " and " + partner + " reproducing -> " + child);
         game.spawnCell(child);
 

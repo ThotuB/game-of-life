@@ -16,7 +16,7 @@ public class AsexuateCell extends Cell {
     public void reproduce() {
         var cell = new AsexuateCell(game, Config.random(), State.STARVING);
 
-        game.client.send("reproduce-asexuate", this.toString());
+        game.client.send("reproduce", this.getId().toString());
         Logger.log(this + " is dividing -> " + cell);
         game.spawnCell(cell);
 

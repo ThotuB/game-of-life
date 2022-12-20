@@ -15,17 +15,17 @@ public abstract class Cell extends Entity implements Runnable {
         public final float eatChance; // 0.005 - 0.03
         public final float reproduceChance; // 0.005 - 0.03
 
-        public final int foodPerReproduce; // 5 - 15
+        public final Integer foodPerReproduce; // 5 - 15
 
-        public final int timeStarve; // 2 - 5
-        public final int timeFull; // 2 - 8
+        public final Integer timeStarve; // 2 - 5
+        public final Integer timeFull; // 2 - 8
 
         public Config(
                 float eatChance,
                 float reproduceChance,
-                int foodPerReproduce,
-                int timeStarve,
-                int timeFull) {
+                Integer foodPerReproduce,
+                Integer timeStarve,
+                Integer timeFull) {
             this.eatChance = eatChance;
             this.reproduceChance = reproduceChance;
 
@@ -36,15 +36,12 @@ public abstract class Cell extends Entity implements Runnable {
         }
 
         public static Config random() {
-            float eatChance = Generate.randomFloat(0.005f, 0.03f);
-            float reproduceChance = Generate.randomFloat(0.005f, 0.03f);
-
-            int foodPerReproduce = Generate.randomInt(5, 15);
-
-            int timeStarve = Generate.randomInt(2, 5);
-            int timeFull = Generate.randomInt(2, 8);
-
-            return new Config(eatChance, reproduceChance, foodPerReproduce, timeStarve, timeFull);
+            return new Config(
+                    Generate.randomFloat(0.005f, 0.03f),
+                    Generate.randomFloat(0.005f, 0.03f),
+                    Generate.randomInt(5, 15),
+                    Generate.randomInt(2, 5),
+                    Generate.randomInt(2, 8));
         }
     }
 
@@ -87,14 +84,14 @@ public abstract class Cell extends Entity implements Runnable {
     }
 
     private void starveCell() {
-        game.client.send("starve", this.toString());
+        game.client.send("starve", this.getId().toString());
         Logger.log(this + " is starving");
         state = State.STARVING;
         restartStopwatch();
     }
 
     private void satiateCell() {
-        game.client.send("satiate", this.toString());
+        game.client.send("satiate", this.getId().toString());
         state = State.FULL;
         restartStopwatch();
     }
@@ -110,7 +107,7 @@ public abstract class Cell extends Entity implements Runnable {
             return;
 
         foodConsumed++;
-        game.client.send("eat", this.toString());
+        game.client.send("eat", this.getId().toString());
         Logger.log(this + " ate " + food
                 + " (\u001B[32m" + foodConsumed + "\u001B[0m /"
                 + " \u001B[32m" + config.foodPerReproduce + "\u001B[0m)");
@@ -146,12 +143,16 @@ public abstract class Cell extends Entity implements Runnable {
 
     protected void die() {
         game.killCell(this);
-        game.client.send("die", this.toString());
+        game.client.send("die", this.getId().toString());
     }
 
     @Override
     public void run() {
-        game.client.send("spawn", this.toString());
+        game.client.send("spawn",
+                this.getId().toString(),
+                config.foodPerReproduce.toString(),
+                config.timeFull.toString(),
+                config.timeStarve.toString());
         Logger.log(this + " is living");
 
         stopwatch.start();
