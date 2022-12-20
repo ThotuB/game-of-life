@@ -6,18 +6,21 @@ import com.rabbitmq.client.ConnectionFactory;
 
 public class Client {
     private static final String QUEUE_NAME = "GAME";
-    Channel channel;
+    private final Channel channel;
+    private final Connection connection;
 
     public Client() {
         var factory = new ConnectionFactory();
         factory.setHost("localhost");
 
-        try (Connection connection = factory.newConnection()) {
+        try {
+            this.connection = factory.newConnection();
             this.channel = connection.createChannel();
 
             channel.queueDeclare(QUEUE_NAME, false, false, false, null);
         } catch (Exception e) {
             e.printStackTrace();
+            throw new RuntimeException(e);
         }
     }
 
@@ -26,6 +29,16 @@ public class Client {
 
         try {
             channel.basicPublish("", QUEUE_NAME, null, message.getBytes());
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void close() {
+        try {
+            this.channel.close();
+            this.connection.close();
         } catch (Exception e) {
             e.printStackTrace();
         }

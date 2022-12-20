@@ -6,9 +6,6 @@ public class App {
                 10,
                 10,
                 100);
-
         Game game = new Game(config);
-
-        // game.simulate();
     }
 }

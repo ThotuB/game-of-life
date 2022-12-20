@@ -78,8 +78,9 @@ public class Game {
         }
 
         System.out.println("Game created");
-        client.send("hello", "world");
+        client.send("test the", "world");
         System.out.println("Sent");
+        client.close();
     }
 
     public Food eat() {
