@@ -4,10 +4,11 @@ import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Stopwatch;
 
+import com.google.gson.Gson;
 import game.Game;
 import game.entity.Entity;
 import game.entity.food.Food;
-import org.json.JSONException;
+
 import utils.generator.Generate;
 import utils.logger.Logger;
 
@@ -44,6 +45,7 @@ public abstract class Cell extends Entity implements Runnable {
                     Generate.randomInt(2, 5),
                     Generate.randomInt(2, 8));
         }
+
     }
 
     protected final Game game;
