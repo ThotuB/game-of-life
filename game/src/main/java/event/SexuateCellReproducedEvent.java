@@ -1,27 +1,30 @@
 package event;
 
+import com.google.gson.Gson;
 import game.entity.cell.SexuateCell;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class SexuateCellReproducedEvent implements IEvent {
-    private final SexuateCell cell;
-    private final SexuateCell cell2;
+import com.google.gson.GsonBuilder;
 
-    public SexuateCellReproducedEvent(SexuateCell cell1, SexuateCell cell2) {
-        this.cell = cell1;
-        this.cell2 = cell2;
-    }
+public class SexuateCellReproducedEvent
+{
+    public static JSONObject generate(SexuateCell cell, SexuateCell cell2) throws JSONException {
+        GsonBuilder builder = new GsonBuilder();
+        Gson gson = builder.create();
 
-    @Override
-    public JSONObject generate() throws JSONException {
+
         return new JSONObject()
-                .put("Cell 1", new JSONObject()
+                .put("type", "sexuateReproduce")
+                .put("Cell1", new JSONObject()
                         .put("id", Integer.toString(cell.getId()))
-                        .put("d", "e")
-                ).put("Cell 2", new JSONObject()
+                        .put("config", gson.toJson(cell.getConfig()))
+                        .put("foodEaten", Integer.toString(cell.getFoodConsumed()))
+                ).put("Cell2", new JSONObject()
                         .put("id",Integer.toString(cell2.getId()))
-                        .put("x", "y"));
+                        .put("config", gson.toJson(cell2.getConfig()))
+                        .put("foodEaten", Integer.toString(cell2.getFoodConsumed()))
+                );
     };
 }
 

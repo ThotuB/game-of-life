@@ -3,6 +3,7 @@ package game.entity.cell;
 import event.SexuateCellReproducedEvent;
 import game.Game;
 import org.json.JSONException;
+import org.json.JSONObject;
 import utils.logger.Logger;
 import utils.queue.MatingQueue;
 
@@ -32,14 +33,15 @@ public class SexuateCell extends Cell {
         }
 
         var child = new SexuateCell(game, Config.random(), matingQueue, State.STARVING);
-        SexuateCellReproducedEvent test = new SexuateCellReproducedEvent(this, partner);
         try{
-            System.out.println(test.generate());
-
+            JSONObject json = SexuateCellReproducedEvent.generate(this, partner);
+            System.out.println(json);
+            game.client.sendJson(json);
         }catch(Exception e) {
             System.out.println(e.getMessage());
         }
-        game.client.send("reproduce", this.getId().toString());
+
+        //game.client.send("reproduce", this.getId().toString());
         Logger.log(this + " and " + partner + " reproducing -> " + child);
         game.spawnCell(child);
 

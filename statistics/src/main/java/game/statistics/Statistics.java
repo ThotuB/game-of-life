@@ -10,6 +10,9 @@ import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.DeliverCallback;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 public class Statistics {
     private static final String QUEUE_NAME = "GAME";
 
@@ -71,7 +74,12 @@ public class Statistics {
 
     private void callbackLoop(Channel channel) throws IOException {
         DeliverCallback callback = ((consumerTag, delivery) -> {
-            processMessage(new String(delivery.getBody(), StandardCharsets.UTF_8));
+            //processMessage(new String(delivery.getBody(), StandardCharsets.UTF_8));
+            try {
+                processMessageJSON(new String(delivery.getBody(), StandardCharsets.UTF_8));
+            } catch (JSONException e) {
+                throw new RuntimeException(e);
+            }
         });
 
         while (true) {
@@ -113,10 +121,51 @@ public class Statistics {
             default:
                 return;
         }
-
         printStatistics();
     }
 
+    private void processMessageJSON(String jsonString) throws JSONException {
+        JSONObject obj = new JSONObject(jsonString);
+        String type = obj.getString("type");
+
+        switch (type) {
+            case "sexuateReproduce":
+                int cell1_id = Integer.parseInt(obj.getJSONObject("Cell1").getString("id"));
+                int cell2_id = Integer.parseInt(obj.getJSONObject("Cell1").getString("id"));
+
+                gameStats.cellStats.get(cell1_id).numChildren++;
+                gameStats.cellStats.get(cell2_id).numChildren++;
+                break;
+
+            /*case "spawn":
+                int fpr = Integer.parseInt(parts[2]);
+                int tFull = Integer.parseInt(parts[3]);
+                int tStarve = Integer.parseInt(parts[4]);
+
+                gameStats.numCells++;
+                gameStats.cellStats.put(id, new CellStats(id, fpr, tFull, tStarve));
+                break;
+            case "die":
+                gameStats.numCells--;
+                gameStats.cellStats.get(id).state = CellStats.State.DEAD;
+                break;
+            case "eat":
+                gameStats.cellStats.get(id).foodEaten++;
+                break;
+            case "satiate":
+                gameStats.cellStats.get(id).state = CellStats.State.FULL;
+                break;
+            case "starve":
+                gameStats.cellStats.get(id).state = CellStats.State.STARVING;
+                break;
+            case "reproduce":
+                gameStats.cellStats.get(id).numChildren++;
+                break;*/
+            default:
+                return;
+        }
+        printStatistics();
+    }
     private static void clearConsole() throws IOException, InterruptedException {
         new ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor();
     }
@@ -143,6 +192,7 @@ public class Statistics {
         try {
             clearConsole();
         } catch (Exception e) {
+            e.printStackTrace();
             return;
         }
 
