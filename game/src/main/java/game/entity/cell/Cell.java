@@ -87,12 +87,14 @@ public abstract class Cell extends Entity implements Runnable {
     }
 
     private void starveCell() {
+        game.client.send("starve", this.toString());
         Logger.log(this + " is starving");
         state = State.STARVING;
         restartStopwatch();
     }
 
     private void satiateCell() {
+        game.client.send("satiate", this.toString());
         state = State.FULL;
         restartStopwatch();
     }
@@ -108,9 +110,10 @@ public abstract class Cell extends Entity implements Runnable {
             return;
 
         foodConsumed++;
+        game.client.send("eat", this.toString());
         Logger.log(this + " ate " + food
-            + " (\u001B[32m" + foodConsumed + "\u001B[0m /"
-            + " \u001B[32m" + config.foodPerReproduce + "\u001B[0m)");
+                + " (\u001B[32m" + foodConsumed + "\u001B[0m /"
+                + " \u001B[32m" + config.foodPerReproduce + "\u001B[0m)");
 
         satiateCell();
     }
@@ -143,10 +146,12 @@ public abstract class Cell extends Entity implements Runnable {
 
     protected void die() {
         game.killCell(this);
+        game.client.send("die", this.toString());
     }
 
     @Override
     public void run() {
+        game.client.send("spawn", this.toString());
         Logger.log(this + " is living");
 
         stopwatch.start();

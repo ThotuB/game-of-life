@@ -28,22 +28,9 @@ public class Game {
         }
     }
 
-    private final class Statistics {
-        public int numSexuateCells;
-        public int numAsexuateCells;
-        public int numFood;
-
-        public Statistics(int numSexuateCells, int numAsexuateCells, int numFood) {
-            this.numSexuateCells = numSexuateCells;
-            this.numAsexuateCells = numAsexuateCells;
-            this.numFood = numFood;
-        }
-    }
-
     private ArrayList<Cell> cells;
     private ArrayList<Food> foods;
 
-    public final Statistics statistics;
     public final Client client = new Client();
 
     // Concurrency
@@ -53,33 +40,23 @@ public class Game {
     private final Lock foodLock = new ReentrantLock();
 
     public Game(Config config) {
-        // Statistics
-        this.statistics = new Statistics(
-                config.numSexuateCells,
-                config.numAsexuateCells,
-                config.numFood);
-
         // Create cells
-        this.cells = new ArrayList<Cell>(statistics.numSexuateCells + statistics.numAsexuateCells);
+        this.cells = new ArrayList<Cell>(config.numSexuateCells + config.numAsexuateCells);
 
-        for (int i = 0; i < statistics.numSexuateCells; i++) {
+        for (int i = 0; i < config.numSexuateCells; i++) {
             cells.add(new SexuateCell(this, Cell.Config.random(), matingQueue));
         }
 
-        for (int i = 0; i < statistics.numAsexuateCells; i++) {
+        for (int i = 0; i < config.numAsexuateCells; i++) {
             cells.add(new AsexuateCell(this, Cell.Config.random()));
         }
 
         // Create food
-        this.foods = new ArrayList<Food>(statistics.numFood);
+        this.foods = new ArrayList<Food>(config.numFood);
 
-        for (int i = 0; i < statistics.numFood; i++) {
+        for (int i = 0; i < config.numFood; i++) {
             foods.add(new Food());
         }
-
-        System.out.println("Game created");
-        client.send("hello", "world");
-        System.out.println("Sent");
     }
 
     public Food eat() {
@@ -90,7 +67,7 @@ public class Game {
             }
 
             Food food = foods.remove(getRandomFood());
-            statistics.numFood--;
+            // statistics.numFood--;
 
             return food;
         } catch (Exception e) {
@@ -103,17 +80,17 @@ public class Game {
     // region Cell Count Methods
     private void decrementCellCount(Cell cell) {
         if (cell instanceof SexuateCell) {
-            statistics.numSexuateCells--;
+            // statistics.numSexuateCells--;
         } else if (cell instanceof AsexuateCell) {
-            statistics.numAsexuateCells--;
+            // statistics.numAsexuateCells--;
         }
     }
 
     private void incrementCellCount(Cell cell) {
         if (cell instanceof SexuateCell) {
-            statistics.numSexuateCells++;
+            // statistics.numSexuateCells++;
         } else if (cell instanceof AsexuateCell) {
-            statistics.numAsexuateCells++;
+            // statistics.numAsexuateCells++;
         }
     }
     // endregion
@@ -156,7 +133,7 @@ public class Game {
         try {
             for (int i = 0; i < numFoodSpawn; i++) {
                 foods.add(new Food());
-                statistics.numFood++;
+                // statistics.numFood++;
             }
         } finally {
             foodLock.unlock();
@@ -179,10 +156,7 @@ public class Game {
     @Override
     public String toString() {
         return "Game:"
-                + "\n  numSexuateCells=" + statistics.numSexuateCells
-                + "\n  numAsexuateCells=" + statistics.numAsexuateCells
                 + "\n  cells=" + cells
-                + "\n  numFood=" + statistics.numFood
                 + "\n  foods=" + foods;
     }
 }

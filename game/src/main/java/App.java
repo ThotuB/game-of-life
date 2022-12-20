@@ -9,6 +9,6 @@ public class App {
 
         Game game = new Game(config);
 
-        // game.simulate();
+        game.simulate();
     }
 }
