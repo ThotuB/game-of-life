@@ -30,8 +30,8 @@ public class App {
         System.out.println(" [*] Waiting game to start...");
 
         // And From your main() method or any othr method
-        Timer timer = new Timer();
-        timer.schedule(new PrintStats(statistics), 0, 1000);
+        // Timer timer = new Timer();
+        // timer.schedule(new PrintStats(statistics), 0, 1000);
 
         statistics.setup();
     }

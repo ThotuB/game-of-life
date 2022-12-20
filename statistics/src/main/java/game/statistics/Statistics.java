@@ -3,6 +3,7 @@ package game.statistics;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
@@ -45,7 +46,7 @@ public class Statistics {
         public int numSexuateCells = 0;
         public int numAsexuateCells = 0;
 
-        public ArrayList<CellStats> cellStats = new ArrayList<CellStats>();
+        public HashMap<Integer, CellStats> cellStats = new HashMap<>();
     }
 
     private GameStats gameStats = new GameStats();
@@ -91,7 +92,7 @@ public class Statistics {
                 int tStarve = Integer.parseInt(parts[4]);
 
                 gameStats.numCells++;
-                gameStats.cellStats.add(new CellStats(id, fpr, tFull, tStarve));
+                gameStats.cellStats.put(id, new CellStats(id, fpr, tFull, tStarve));
                 break;
             case "die":
                 gameStats.numCells--;
@@ -112,6 +113,8 @@ public class Statistics {
             default:
                 return;
         }
+
+        printStatistics();
     }
 
     private static void clearConsole() throws IOException, InterruptedException {
@@ -129,7 +132,7 @@ public class Statistics {
                 + "|  ID  |   TYPE   | FPR | T_FULL | T_STARVE |   STATE   | FOOD | CHILDREN |\n"
                 + "---------------------------------------------------------------------------\n";
 
-        for (CellStats cell : gameStats.cellStats) {
+        for (CellStats cell : gameStats.cellStats.values()) {
             result += String.format("| %4d | %8s | %3d | %6d | %8d | %9s | %4d | %8d |\n",
                     cell.id, cell.type, cell.fpr, cell.tFull, cell.tStarve, cell.state, cell.foodEaten,
                     cell.numChildren);
