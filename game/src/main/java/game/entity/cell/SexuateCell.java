@@ -1,6 +1,8 @@
 package game.entity.cell;
 
+import event.SexuateCellReproducedEvent;
 import game.Game;
+import org.json.JSONException;
 import utils.logger.Logger;
 import utils.queue.MatingQueue;
 
@@ -18,7 +20,7 @@ public class SexuateCell extends Cell {
     }
 
     @Override
-    public void reproduce() {
+    public void reproduce()  {
         SexuateCell partner = matingQueue.findPartner(this);
 
         if (partner == null) {
@@ -30,7 +32,13 @@ public class SexuateCell extends Cell {
         }
 
         var child = new SexuateCell(game, Config.random(), matingQueue, State.STARVING);
+        SexuateCellReproducedEvent test = new SexuateCellReproducedEvent(this, partner);
+        try{
+            System.out.println(test.generate());
 
+        }catch(Exception e) {
+            System.out.println(e.getMessage());
+        }
         game.client.send("reproduce", this.getId().toString());
         Logger.log(this + " and " + partner + " reproducing -> " + child);
         game.spawnCell(child);

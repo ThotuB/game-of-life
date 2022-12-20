@@ -7,6 +7,7 @@ import com.google.common.base.Stopwatch;
 import game.Game;
 import game.entity.Entity;
 import game.entity.food.Food;
+import org.json.JSONException;
 import utils.generator.Generate;
 import utils.logger.Logger;
 
@@ -137,8 +138,12 @@ public abstract class Cell extends Entity implements Runnable {
 
         if (roll > config.reproduceChance)
             return;
+        try {
+            reproduce();
 
-        reproduce();
+        }catch(Exception e) {
+            System.out.println(e);
+        }
     }
 
     protected void die() {
@@ -188,6 +193,13 @@ public abstract class Cell extends Entity implements Runnable {
     @Override
     public String toString() {
         return "Cell #" + id;
+    }
+
+    public Config getConfig() {
+        return config;
+    }
+    public int getFoodConsumed() {
+        return foodConsumed;
     }
 
     public void printDetails() {

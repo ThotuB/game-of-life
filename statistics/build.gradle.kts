@@ -24,6 +24,7 @@ dependencies {
     implementation("com.google.guava:guava:31.1-jre")
 
     implementation("com.rabbitmq:amqp-client:5.16.0")
+    implementation("org.json:json:20090211")
 
     implementation ("org.slf4j:slf4j-api:2.0.5")
     implementation ("org.slf4j:slf4j-simple:2.0.5")
