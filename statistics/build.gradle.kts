@@ -23,12 +23,12 @@ dependencies {
     // This dependency is used by the application.
     implementation("com.google.guava:guava:31.1-jre")
     implementation("com.rabbitmq:amqp-client:5.16.0")
-
-    implementation("com.google.code.gson:gson:2.10")
+    
     implementation("org.json:json:20220924")
+    implementation("com.google.code.gson:gson:2.10")
 
-    implementation ("org.slf4j:slf4j-api:2.0.5")
-    implementation ("org.slf4j:slf4j-simple:2.0.5")
+    implementation("org.slf4j:slf4j-api:1.7.26")
+    implementation("org.slf4j:slf4j-log4j12:1.7.26")
 }
 
 application {
