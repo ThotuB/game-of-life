@@ -5,32 +5,35 @@ import game.Game;
 import org.json.JSONException;
 import org.json.JSONObject;
 import utils.logger.Logger;
-import utils.queue.MatingQueue;
+
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class SexuateCell extends Cell {
-    private MatingQueue matingQueue;
+    private final ConcurrentLinkedQueue<SexuateCell> matingQueue;
 
-    public SexuateCell(Game game, Config config, MatingQueue matingQueue) {
+    public SexuateCell(Game game, Config config, ConcurrentLinkedQueue<SexuateCell> matingQueue) {
         super(game, config);
         this.matingQueue = matingQueue;
     }
 
-    public SexuateCell(Game game, Config config, MatingQueue matingQueue, State state) {
+    public SexuateCell(Game game, Config config, ConcurrentLinkedQueue<SexuateCell> matingQueue, State state) {
         super(game, config, state);
         this.matingQueue = matingQueue;
     }
 
     @Override
     public void reproduce()  {
-        SexuateCell partner = matingQueue.findPartner(this);
-
-        if (partner == null) {
+        if (matingQueue.stream().findAny().isEmpty()) {
+            matingQueue.add(this);
             Logger.log(this + " waiting for a partner");
             return;
         }
+        SexuateCell partner = matingQueue.stream().findAny().get();
+
         if (partner == this) {
             return;
         }
+        matingQueue.remove(this);
 
         var child = new SexuateCell(game, Config.random(), matingQueue, State.STARVING);
         try{
@@ -51,7 +54,7 @@ public class SexuateCell extends Cell {
     @Override
     protected void die() {
         super.die();
-        matingQueue.tryRemove(this);
+        matingQueue.remove(this);
     }
 
     @Override
