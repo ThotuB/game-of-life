@@ -6,11 +6,16 @@ import game.entity.cell.Cell;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class SimpleEvent {
-    public static JSONObject generate(Cell cell, String event) throws JSONException {
-        GsonBuilder builder = new GsonBuilder();
-        Gson gson = builder.create();
+public class CellEvent implements IEvent {
+    private final String event;
+    private final Cell cell;
 
+    public CellEvent(String event, Cell cell) {
+        this.event = event;
+        this.cell = cell;
+    }
+
+    public JSONObject generate() throws JSONException {
         return new JSONObject()
                 .put("type", event)
                 .put("Cell1", new JSONObject()
