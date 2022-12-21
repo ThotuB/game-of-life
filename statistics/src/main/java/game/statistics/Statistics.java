@@ -35,11 +35,13 @@ public class Statistics {
         public State state = State.FULL;
         public Type type = Type.SEXUATE;
 
-        public CellStats(int id, int fpr, int tFull, int tStarve) {
+        public CellStats(int id, int fpr, int tFull, int tStarve, boolean sexuate) {
             this.id = id;
             this.fpr = fpr;
             this.tFull = tFull;
             this.tStarve = tStarve;
+            if (!sexuate)
+                this.type = Type.ASEXUATE;
         }
     }
 
@@ -79,6 +81,7 @@ public class Statistics {
                 processMessageJSON(new String(delivery.getBody(), StandardCharsets.UTF_8));
             } catch (JSONException e) {
                e.printStackTrace();
+               throw new RuntimeException(e);
             }
         });
 
@@ -113,13 +116,13 @@ public class Statistics {
 
             case "spawn":
                 JSONObject config = new JSONObject(obj.getJSONObject("Cell1").getString("config"));
-                System.out.println("Decoded config: " + config);
+                //System.out.println("Decoded config: " + config);
                 int fpr = config.getInt("foodPerReproduce");
                 int tFull = config.getInt("timeFull");
                 int tStarve = config.getInt("timeStarve");
-
+                boolean sexuate = obj.getJSONObject("Cell1").getBoolean("sexuate");
                 gameStats.numCells++;
-                gameStats.cellStats.put(cell_id, new CellStats(cell_id, fpr, tFull, tStarve));
+                gameStats.cellStats.put(cell_id, new CellStats(cell_id, fpr, tFull, tStarve, sexuate));
                 break;
 
             case "die":
