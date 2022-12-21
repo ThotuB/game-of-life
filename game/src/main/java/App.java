@@ -5,7 +5,7 @@ public class App {
                 var config = new Game.Config(
                                 3,
                                 3,
-                                20);
+                                6);
                 Game game = new Game(config);
 
                 game.simulate();
