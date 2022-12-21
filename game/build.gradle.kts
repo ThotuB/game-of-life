@@ -18,16 +18,16 @@ repositories {
 
 dependencies {
     // Use JUnit Jupiter for testing.
-    testImplementation("org.junit.jupiter:junit-jupiter:5.7.2")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.9.0")
 
     // This dependency is used by the application.
-    implementation("com.google.guava:guava:30.1.1-jre")
+    implementation("com.google.guava:guava:31.1-jre")
 
-    implementation("org.slf4j:slf4j-api:1.7.26")
+    implementation("org.slf4j:slf4j-api:2.0.5")
     implementation("org.slf4j:slf4j-log4j12:1.7.26")
-    implementation("org.json:json:20090211")
+    implementation("org.json:json:20220924")
     implementation("com.google.code.gson:gson:2.10")
-    implementation("com.rabbitmq:amqp-client:5.7.1")
+    implementation("com.rabbitmq:amqp-client:5.16.0")
 }
 
 application {
