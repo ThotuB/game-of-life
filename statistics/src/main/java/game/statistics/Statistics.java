@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Objects;
 
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
@@ -97,10 +98,12 @@ public class Statistics {
             System.out.println(jsonString + " is not a valid json!");
             return;
         }
-
+        int cell_id = 0;
         JSONObject obj = new JSONObject(jsonString);
         String type = obj.getString("type");
-        int cell_id = obj.getJSONObject("Cell1").getInt("id");
+        if (!Objects.equals(type, "exit")) {
+            cell_id = obj.getJSONObject("Cell1").getInt("id");
+        }
 
         switch (type) {
             case "sexuateReproduce":
