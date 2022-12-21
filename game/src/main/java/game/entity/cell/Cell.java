@@ -4,11 +4,13 @@ import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Stopwatch;
 
-import com.google.gson.Gson;
+import event.SimpleEvent;
+import event.SpawnEvent;
 import game.Game;
 import game.entity.Entity;
 import game.entity.food.Food;
 
+import org.json.JSONObject;
 import utils.generator.Generate;
 import utils.logger.Logger;
 
@@ -87,14 +89,28 @@ public abstract class Cell extends Entity implements Runnable {
     }
 
     private void starveCell() {
-        game.client.send("starve", this.getId().toString());
+        //game.client.send("starve", this.getId().toString());
+        try{
+            JSONObject json = SimpleEvent.generate(this, "starve");
+            System.out.println(json);
+            game.client.sendJson(json);
+        }catch(Exception e) {
+            System.out.println(e.getMessage());
+        }
         Logger.log(this + " is starving");
         state = State.STARVING;
         restartStopwatch();
     }
 
     private void satiateCell() {
-        game.client.send("satiate", this.getId().toString());
+        //game.client.send("satiate", this.getId().toString());
+        try{
+            JSONObject json = SimpleEvent.generate(this, "satiate");
+            System.out.println(json);
+            game.client.sendJson(json);
+        }catch(Exception e) {
+            System.out.println(e.getMessage());
+        }
         state = State.FULL;
         restartStopwatch();
     }
@@ -110,7 +126,14 @@ public abstract class Cell extends Entity implements Runnable {
             return;
 
         foodConsumed++;
-        game.client.send("eat", this.getId().toString());
+        //game.client.send("eat", this.getId().toString());
+        try{
+            JSONObject json = SimpleEvent.generate(this, "eat");
+            System.out.println(json);
+            game.client.sendJson(json);
+        }catch(Exception e) {
+            System.out.println(e.getMessage());
+        }
         Logger.log(this + " ate " + food
                 + " (\u001B[32m" + foodConsumed + "\u001B[0m /"
                 + " \u001B[32m" + config.foodPerReproduce + "\u001B[0m)");
@@ -150,16 +173,30 @@ public abstract class Cell extends Entity implements Runnable {
 
     protected void die() {
         game.killCell(this);
-        game.client.send("die", this.getId().toString());
+        //game.client.send("die", this.getId().toString());
+        try{
+            JSONObject json = SimpleEvent.generate(this, "die");
+            System.out.println(json);
+            game.client.sendJson(json);
+        }catch(Exception e) {
+            System.out.println(e.getMessage());
+        }
     }
 
     @Override
     public void run() {
-        game.client.send("spawn",
+        /*game.client.send("spawn",
                 this.getId().toString(),
                 config.foodPerReproduce.toString(),
                 config.timeFull.toString(),
-                config.timeStarve.toString());
+                config.timeStarve.toString());*/
+        try{
+            JSONObject json = SpawnEvent.generate(this);
+            System.out.println(json);
+            game.client.sendJson(json);
+        }catch(Exception e) {
+            System.out.println(e.getMessage());
+        }
         Logger.log(this + " is living");
 
         stopwatch.start();

@@ -88,79 +88,54 @@ public class Statistics {
         }
     }
 
-    private void processMessage(String message) {
-        String[] parts = message.split(":");
-        String type = parts[0];
-        int id = Integer.parseInt(parts[1]);
-
-        switch (type) {
-            case "spawn":
-                int fpr = Integer.parseInt(parts[2]);
-                int tFull = Integer.parseInt(parts[3]);
-                int tStarve = Integer.parseInt(parts[4]);
-
-                gameStats.numCells++;
-                gameStats.cellStats.put(id, new CellStats(id, fpr, tFull, tStarve));
-                break;
-            case "die":
-                gameStats.numCells--;
-                gameStats.cellStats.get(id).state = CellStats.State.DEAD;
-                break;
-            case "eat":
-                gameStats.cellStats.get(id).foodEaten++;
-                break;
-            case "satiate":
-                gameStats.cellStats.get(id).state = CellStats.State.FULL;
-                break;
-            case "starve":
-                gameStats.cellStats.get(id).state = CellStats.State.STARVING;
-                break;
-            case "reproduce":
-                gameStats.cellStats.get(id).numChildren++;
-                break;
-            default:
-                return;
-        }
-        printStatistics();
-    }
 
     private void processMessageJSON(String jsonString) throws JSONException {
+        if (jsonString.charAt(0) != '{') {
+            System.out.println(jsonString + " is not a valid json!");
+            return;
+        }
+
         JSONObject obj = new JSONObject(jsonString);
         String type = obj.getString("type");
+        int cell_id = Integer.parseInt(obj.getJSONObject("Cell1").getString("id"));
 
         switch (type) {
             case "sexuateReproduce":
-                int cell1_id = Integer.parseInt(obj.getJSONObject("Cell1").getString("id"));
-                int cell2_id = Integer.parseInt(obj.getJSONObject("Cell1").getString("id"));
+                int cell2_id = Integer.parseInt(obj.getJSONObject("Cell2").getString("id"));
 
-                gameStats.cellStats.get(cell1_id).numChildren++;
+                gameStats.cellStats.get(cell_id).numChildren++;
                 gameStats.cellStats.get(cell2_id).numChildren++;
                 break;
 
-            /*case "spawn":
-                int fpr = Integer.parseInt(parts[2]);
-                int tFull = Integer.parseInt(parts[3]);
-                int tStarve = Integer.parseInt(parts[4]);
+            case "asexuateReproduce":
+                gameStats.cellStats.get(cell_id).numChildren++;
+                break;
+
+            case "spawn":
+                int fpr = obj.getJSONObject("Cell1").getJSONObject("config").getInt("foodPerReproduce");
+                int tFull = obj.getJSONObject("Cell1").getJSONObject("config").getInt("timeFull");
+                int tStarve = obj.getJSONObject("Cell1").getJSONObject("config").getInt("timeStarve");
 
                 gameStats.numCells++;
-                gameStats.cellStats.put(id, new CellStats(id, fpr, tFull, tStarve));
+                gameStats.cellStats.put(cell_id, new CellStats(cell_id, fpr, tFull, tStarve));
                 break;
+
             case "die":
                 gameStats.numCells--;
-                gameStats.cellStats.get(id).state = CellStats.State.DEAD;
+                gameStats.cellStats.get(cell_id).state = CellStats.State.DEAD;
                 break;
+
             case "eat":
-                gameStats.cellStats.get(id).foodEaten++;
+                gameStats.cellStats.get(cell_id).foodEaten++;
                 break;
+
             case "satiate":
-                gameStats.cellStats.get(id).state = CellStats.State.FULL;
+                gameStats.cellStats.get(cell_id).state = CellStats.State.FULL;
                 break;
             case "starve":
-                gameStats.cellStats.get(id).state = CellStats.State.STARVING;
+                gameStats.cellStats.get(cell_id).state = CellStats.State.STARVING;
                 break;
-            case "reproduce":
-                gameStats.cellStats.get(id).numChildren++;
-                break;*/
+
             default:
                 return;
         }
