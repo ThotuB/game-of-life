@@ -27,4 +27,11 @@ public class EventFactory {
     public static JSONObject createReproduceSexuateEvent(SexuateCell cell1, SexuateCell cell2) {
         return new ReproduceSexuateEvent(cell1, cell2).generate();
     }
+
+    public static JSONObject gameStartedEvent(int numSexuate, int numAssexuate, int numFood) {
+        return new GameStartedEvent(numSexuate, numAssexuate, numFood).generate();
+    }
+    public static JSONObject cellDiedEvent(Cell cell, int createdFood) {
+        return new CellDiedEvent(cell, createdFood).generate();
+    }
 }

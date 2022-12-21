@@ -150,7 +150,6 @@ public abstract class Cell extends Entity implements Runnable {
 
     protected void die() {
         game.killCell(this);
-        game.client.sendJson(EventFactory.createCellEvent("die", this));
     }
 
     @Override

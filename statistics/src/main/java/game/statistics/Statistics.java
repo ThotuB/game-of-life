@@ -94,6 +94,12 @@ public class Statistics {
         String type = obj.getString("type");
 
         switch (type) {
+            case "game-started" -> {
+                gameStats.numSexuateCells = obj.getInt("num_sexuate");
+                gameStats.numAsexuateCells = obj.getInt("num_asexuate");
+                gameStats.numFood = obj.getInt("num_food");
+                gameStats.numCells = obj.getInt("total_cells");
+            }
             case "spawn" -> {
                 JSONObject cell = obj.getJSONObject("cell");
                 int cellId = cell.getInt("id");
@@ -103,27 +109,39 @@ public class Statistics {
                 int tStarve = config.getInt("time_starve");
                 boolean sexuate = cell.getBoolean("type");
 
-                gameStats.numCells++;
                 gameStats.cellStats.put(cellId, new CellStats(cellId, fpr, tFull, tStarve, sexuate));
             }
             case "eat" -> {
                 int cellId = obj.getInt("cell_id");
                 gameStats.cellStats.get(cellId).foodEaten++;
+                gameStats.numFood--;
             }
             case "reproduce-sexuate" -> {
                 int cell1Id = obj.getInt("cell_1_id");
                 int cell2Id = obj.getInt("cell_2_id");
                 gameStats.cellStats.get(cell1Id).numChildren++;
                 gameStats.cellStats.get(cell2Id).numChildren++;
+                gameStats.numSexuateCells++;
+                gameStats.numCells++;
             }
             case "reproduce-asexuate" -> {
                 int cellId = obj.getInt("cell_id");
                 gameStats.cellStats.get(cellId).numChildren++;
+                gameStats.numAsexuateCells++;
+                gameStats.numCells++;
             }
-            case "die" -> {
+            case "cell-died" -> {
                 int cellId = obj.getInt("cell_id");
+                boolean sexuate = obj.getBoolean("cell_type");
+
                 gameStats.numCells--;
                 gameStats.cellStats.get(cellId).state = CellStats.State.DEAD;
+                if (sexuate) {
+                    gameStats.numSexuateCells--;
+                } else {
+                    gameStats.numAsexuateCells--;
+                }
+                gameStats.numFood += obj.getInt("created_food");
             }
             case "satiate" -> {
                 int cellId = obj.getInt("cell_id");

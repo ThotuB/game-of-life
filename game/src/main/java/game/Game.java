@@ -34,7 +34,6 @@ public class Game {
     public final Client client = new Client();
 
     // Concurrency
-    //private MatingQueue matingQueue = new MatingQueue();
     private ConcurrentLinkedQueue<SexuateCell> matingQueue = new ConcurrentLinkedQueue<>();
 
     ExecutorService executor = Executors.newCachedThreadPool();
@@ -59,6 +58,13 @@ public class Game {
         for (int i = 0; i < config.numFood; i++) {
             foods.add(new Food());
         }
+
+        client.sendJson(EventFactory.gameStartedEvent(
+                (int)cells.stream().filter(c -> c instanceof SexuateCell).count(),
+                (int)cells.stream().filter(c -> c instanceof AsexuateCell).count(),
+                foods.size()
+        ));
+
     }
 
     public Food eat() {
@@ -117,8 +123,10 @@ public class Game {
         cellLock.lock();
         try {
             cells.remove(cell);
+            client.sendJson(EventFactory.cellDiedEvent(cell, numFoodSpawn));
             Logger.log(cell + " died (\u001B[31m" + cells.size() + " left\u001B[0m) -> +" + numFoodSpawn + " food");
             decrementCellCount(cell);
+
         } finally {
             cellLock.unlock();
         }
