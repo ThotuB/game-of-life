@@ -17,13 +17,13 @@ public class SexuateCellReproducedEvent
         return new JSONObject()
                 .put("type", "sexuateReproduce")
                 .put("Cell1", new JSONObject()
-                        .put("id", Integer.toString(cell.getId()))
+                        .put("id", cell.getId())
                         .put("config", gson.toJson(cell.getConfig()))
-                        .put("foodEaten", Integer.toString(cell.getFoodConsumed()))
+                        .put("foodEaten", cell.getFoodConsumed())
                 ).put("Cell2", new JSONObject()
-                        .put("id",Integer.toString(cell2.getId()))
+                        .put("id",cell2.getId())
                         .put("config", gson.toJson(cell2.getConfig()))
-                        .put("foodEaten", Integer.toString(cell2.getFoodConsumed()))
+                        .put("foodEaten", cell2.getFoodConsumed())
                 );
     };
 }

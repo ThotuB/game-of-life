@@ -14,7 +14,7 @@ public class SpawnEvent {
         return new JSONObject()
                 .put("type", "spawn")
                 .put("Cell1", new JSONObject()
-                        .put("id", Integer.toString(cell.getId()))
+                        .put("id", cell.getId())
                         .put("config", gson.toJson(cell.getConfig()))
                 );
     };
