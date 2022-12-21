@@ -10,7 +10,6 @@ import game.entity.cell.Cell;
 import game.entity.cell.SexuateCell;
 import game.entity.food.Food;
 import utils.logger.Logger;
-import utils.queue.MatingQueue;
 
 public class Game {
     public static final class Config {
@@ -34,7 +33,9 @@ public class Game {
     public final Client client = new Client();
 
     // Concurrency
-    private MatingQueue matingQueue = new MatingQueue();
+    //private MatingQueue matingQueue = new MatingQueue();
+    private ConcurrentLinkedQueue<SexuateCell> matingQueue = new ConcurrentLinkedQueue<>();
+
     ExecutorService executor = Executors.newCachedThreadPool();
     private final Lock cellLock = new ReentrantLock();
     private final Lock foodLock = new ReentrantLock();
