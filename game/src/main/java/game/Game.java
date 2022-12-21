@@ -137,6 +137,7 @@ public class Game {
             cell.printDetails();
 
             client.sendJson(EventFactory.createEvent("exit"));
+            System.exit(0);
             return;
         }
 
