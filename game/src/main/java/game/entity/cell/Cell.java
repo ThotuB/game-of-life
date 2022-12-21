@@ -89,10 +89,8 @@ public abstract class Cell extends Entity implements Runnable {
     }
 
     private void starveCell() {
-        //game.client.send("starve", this.getId().toString());
         try{
             JSONObject json = SimpleEvent.generate(this, "starve");
-            System.out.println(json);
             game.client.sendJson(json);
         }catch(Exception e) {
             System.out.println(e.getMessage());
@@ -103,10 +101,8 @@ public abstract class Cell extends Entity implements Runnable {
     }
 
     private void satiateCell() {
-        //game.client.send("satiate", this.getId().toString());
         try{
             JSONObject json = SimpleEvent.generate(this, "satiate");
-            System.out.println(json);
             game.client.sendJson(json);
         }catch(Exception e) {
             System.out.println(e.getMessage());
@@ -126,10 +122,8 @@ public abstract class Cell extends Entity implements Runnable {
             return;
 
         foodConsumed++;
-        //game.client.send("eat", this.getId().toString());
         try{
             JSONObject json = SimpleEvent.generate(this, "eat");
-            System.out.println(json);
             game.client.sendJson(json);
         }catch(Exception e) {
             System.out.println(e.getMessage());
@@ -173,10 +167,8 @@ public abstract class Cell extends Entity implements Runnable {
 
     protected void die() {
         game.killCell(this);
-        //game.client.send("die", this.getId().toString());
         try{
             JSONObject json = SimpleEvent.generate(this, "die");
-            System.out.println(json);
             game.client.sendJson(json);
         }catch(Exception e) {
             System.out.println(e.getMessage());
@@ -185,14 +177,9 @@ public abstract class Cell extends Entity implements Runnable {
 
     @Override
     public void run() {
-        /*game.client.send("spawn",
-                this.getId().toString(),
-                config.foodPerReproduce.toString(),
-                config.timeFull.toString(),
-                config.timeStarve.toString());*/
         try{
             JSONObject json = SpawnEvent.generate(this);
-            System.out.println(json);
+            //System.out.println(json);
             game.client.sendJson(json);
         }catch(Exception e) {
             System.out.println(e.getMessage());

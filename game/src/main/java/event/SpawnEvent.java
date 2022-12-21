@@ -16,6 +16,7 @@ public class SpawnEvent {
                 .put("Cell1", new JSONObject()
                         .put("id", cell.getId())
                         .put("config", gson.toJson(cell.getConfig()))
+                        .put("sexuate", cell instanceof game.entity.cell.SexuateCell)
                 );
     };
 }
