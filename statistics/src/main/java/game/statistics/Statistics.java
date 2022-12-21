@@ -15,7 +15,7 @@ import org.json.JSONObject;
 
 public class Statistics {
     private static final String QUEUE_NAME = "GAME";
-
+    private boolean running = true;
     class CellStats {
         enum State {
             FULL, STARVING, DEAD
@@ -78,11 +78,11 @@ public class Statistics {
             try {
                 processMessageJSON(new String(delivery.getBody(), StandardCharsets.UTF_8));
             } catch (JSONException e) {
-                throw new RuntimeException(e);
+               e.printStackTrace();
             }
         });
 
-        while (true) {
+        while (running) {
             channel.basicConsume(QUEUE_NAME, true, callback, consumerTag -> {
             });
         }
@@ -97,11 +97,11 @@ public class Statistics {
 
         JSONObject obj = new JSONObject(jsonString);
         String type = obj.getString("type");
-        int cell_id = Integer.parseInt(obj.getJSONObject("Cell1").getString("id"));
+        int cell_id = obj.getJSONObject("Cell1").getInt("id");
 
         switch (type) {
             case "sexuateReproduce":
-                int cell2_id = Integer.parseInt(obj.getJSONObject("Cell2").getString("id"));
+                int cell2_id = obj.getJSONObject("Cell2").getInt("id");
 
                 gameStats.cellStats.get(cell_id).numChildren++;
                 gameStats.cellStats.get(cell2_id).numChildren++;
@@ -112,9 +112,11 @@ public class Statistics {
                 break;
 
             case "spawn":
-                int fpr = obj.getJSONObject("Cell1").getJSONObject("config").getInt("foodPerReproduce");
-                int tFull = obj.getJSONObject("Cell1").getJSONObject("config").getInt("timeFull");
-                int tStarve = obj.getJSONObject("Cell1").getJSONObject("config").getInt("timeStarve");
+                JSONObject config = new JSONObject(obj.getJSONObject("Cell1").getString("config"));
+                System.out.println("Decoded config: " + config);
+                int fpr = config.getInt("foodPerReproduce");
+                int tFull = config.getInt("timeFull");
+                int tStarve = config.getInt("timeStarve");
 
                 gameStats.numCells++;
                 gameStats.cellStats.put(cell_id, new CellStats(cell_id, fpr, tFull, tStarve));
@@ -134,6 +136,9 @@ public class Statistics {
                 break;
             case "starve":
                 gameStats.cellStats.get(cell_id).state = CellStats.State.STARVING;
+                break;
+            case "exit":
+                running = false;
                 break;
 
             default:

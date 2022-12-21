@@ -29,8 +29,8 @@ public class Client {
         }
     }
 
-    public void send(String type, String... values) {
-        final String message = type + ":" + String.join(":", values);
+    public void send(String message) {
+        //final String message = type + ":" + String.join(":", values);
 
         try {
             channel.basicPublish("", QUEUE_NAME, null, message.getBytes());

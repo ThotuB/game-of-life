@@ -4,11 +4,13 @@ import java.util.ArrayList;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.*;
 
+import event.SimpleEvent;
 import game.client.Client;
 import game.entity.cell.AsexuateCell;
 import game.entity.cell.Cell;
 import game.entity.cell.SexuateCell;
 import game.entity.food.Food;
+import org.json.JSONObject;
 import utils.logger.Logger;
 
 public class Game {
@@ -126,6 +128,8 @@ public class Game {
         if (cells.isEmpty()) {
             executor.shutdown();
             cell.printDetails();
+
+            client.send("{\"type\" : \"exit\"}");
             return;
         }
 

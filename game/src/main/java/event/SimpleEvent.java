@@ -14,7 +14,7 @@ public class SimpleEvent {
         return new JSONObject()
                 .put("type", event)
                 .put("Cell1", new JSONObject()
-                        .put("id", Integer.toString(cell.getId()))
+                        .put("id", cell.getId())
                 );
     };
 }
