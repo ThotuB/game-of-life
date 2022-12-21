@@ -16,6 +16,7 @@ import org.json.JSONObject;
 public class Statistics {
     private static final String QUEUE_NAME = "GAME";
     private boolean running = true;
+
     class CellStats {
         enum State {
             FULL, STARVING, DEAD
@@ -76,13 +77,8 @@ public class Statistics {
 
     private void callbackLoop(Channel channel) throws IOException {
         DeliverCallback callback = ((consumerTag, delivery) -> {
-            //processMessage(new String(delivery.getBody(), StandardCharsets.UTF_8));
-            try {
-                processMessageJSON(new String(delivery.getBody(), StandardCharsets.UTF_8));
-            } catch (JSONException e) {
-               e.printStackTrace();
-               throw new RuntimeException(e);
-            }
+            // processMessage(new String(delivery.getBody(), StandardCharsets.UTF_8));
+            processMessageJSON(new String(delivery.getBody(), StandardCharsets.UTF_8));
         });
 
         while (running) {
@@ -91,64 +87,59 @@ public class Statistics {
         }
     }
 
-
-    private void processMessageJSON(String jsonString) throws JSONException {
-        if (jsonString.charAt(0) != '{') {
-            System.out.println(jsonString + " is not a valid json!");
-            return;
-        }
+    private void processMessageJSON(String jsonString) {
 
         JSONObject obj = new JSONObject(jsonString);
         String type = obj.getString("type");
-        int cell_id = obj.getJSONObject("Cell1").getInt("id");
 
         switch (type) {
-            case "sexuateReproduce":
-                int cell2_id = obj.getJSONObject("Cell2").getInt("id");
+            case "spawn" -> {
+                JSONObject cell = obj.getJSONObject("cell");
+                int cellId = cell.getInt("id");
+                JSONObject config = cell.getJSONObject("config");
+                int fpr = config.getInt("fpr");
+                int tFull = config.getInt("time_full");
+                int tStarve = config.getInt("time_starve");
+                boolean sexuate = cell.getBoolean("type");
 
-                gameStats.cellStats.get(cell_id).numChildren++;
-                gameStats.cellStats.get(cell2_id).numChildren++;
-                break;
-
-            case "asexuateReproduce":
-                gameStats.cellStats.get(cell_id).numChildren++;
-                break;
-
-            case "spawn":
-                JSONObject config = new JSONObject(obj.getJSONObject("Cell1").getString("config"));
-                //System.out.println("Decoded config: " + config);
-                int fpr = config.getInt("foodPerReproduce");
-                int tFull = config.getInt("timeFull");
-                int tStarve = config.getInt("timeStarve");
-                boolean sexuate = obj.getJSONObject("Cell1").getBoolean("sexuate");
                 gameStats.numCells++;
-                gameStats.cellStats.put(cell_id, new CellStats(cell_id, fpr, tFull, tStarve, sexuate));
-                break;
-
-            case "die":
+                gameStats.cellStats.put(cellId, new CellStats(cellId, fpr, tFull, tStarve, sexuate));
+            }
+            case "eat" -> {
+                int cellId = obj.getInt("cell_id");
+                gameStats.cellStats.get(cellId).foodEaten++;
+            }
+            case "reproduce-sexuate" -> {
+                int cell1Id = obj.getInt("cell_1_id");
+                int cell2Id = obj.getInt("cell_2_id");
+                gameStats.cellStats.get(cell1Id).numChildren++;
+                gameStats.cellStats.get(cell2Id).numChildren++;
+            }
+            case "reproduce-asexuate" -> {
+                int cellId = obj.getInt("cell_id");
+                gameStats.cellStats.get(cellId).numChildren++;
+            }
+            case "die" -> {
+                int cellId = obj.getInt("cell_id");
                 gameStats.numCells--;
-                gameStats.cellStats.get(cell_id).state = CellStats.State.DEAD;
-                break;
-
-            case "eat":
-                gameStats.cellStats.get(cell_id).foodEaten++;
-                break;
-
-            case "satiate":
-                gameStats.cellStats.get(cell_id).state = CellStats.State.FULL;
-                break;
-            case "starve":
-                gameStats.cellStats.get(cell_id).state = CellStats.State.STARVING;
-                break;
-            case "exit":
-                running = false;
-                break;
-
-            default:
+                gameStats.cellStats.get(cellId).state = CellStats.State.DEAD;
+            }
+            case "satiate" -> {
+                int cellId = obj.getInt("cell_id");
+                gameStats.cellStats.get(cellId).state = CellStats.State.FULL;
+            }
+            case "starve" -> {
+                int cellId = obj.getInt("cell_id");
+                gameStats.cellStats.get(cellId).state = CellStats.State.STARVING;
+            }
+            case "exit" -> running = false;
+            default -> {
                 return;
+            }
         }
         printStatistics();
     }
+
     private static void clearConsole() throws IOException, InterruptedException {
         new ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor();
     }

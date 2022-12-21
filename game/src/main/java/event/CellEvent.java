@@ -18,8 +18,6 @@ public class CellEvent implements IEvent {
     public JSONObject generate() throws JSONException {
         return new JSONObject()
                 .put("type", event)
-                .put("Cell1", new JSONObject()
-                        .put("id", cell.getId())
-                );
+                .put("cell_id", cell.getId());
     };
 }

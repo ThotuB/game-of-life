@@ -1,9 +1,7 @@
 package game.entity.cell;
 
-import event.SexuateCellReproducedEvent;
+import event.factory.EventFactory;
 import game.Game;
-import org.json.JSONException;
-import org.json.JSONObject;
 import utils.logger.Logger;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -36,15 +34,9 @@ public class SexuateCell extends Cell {
         matingQueue.remove(this);
 
         var child = new SexuateCell(game, Config.random(), matingQueue, State.STARVING);
-        try{
-            JSONObject json = SexuateCellReproducedEvent.generate(this, partner);
-            System.out.println(json);
-            game.client.sendJson(json);
-        }catch(Exception e) {
-            System.out.println(e.getMessage());
-        }
 
-        //game.client.send("reproduce", this.getId().toString());
+        game.client.sendJson(EventFactory.createReproduceSexuateEvent(this, partner));
+
         Logger.log(this + " and " + partner + " reproducing -> " + child);
         game.spawnCell(child);
 

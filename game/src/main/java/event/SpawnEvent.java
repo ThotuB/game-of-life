@@ -6,17 +6,22 @@ import game.entity.cell.Cell;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class SpawnEvent {
-    public static JSONObject generate(Cell cell) throws JSONException {
-        GsonBuilder builder = new GsonBuilder();
-        Gson gson = builder.create();
+public class SpawnEvent implements IEvent {
+    private final Cell cell;
 
+    public SpawnEvent(Cell cell) {
+        this.cell = cell;
+    }
+
+    public JSONObject generate() {
         return new JSONObject()
                 .put("type", "spawn")
-                .put("Cell1", new JSONObject()
+                .put("cell", new JSONObject()
                         .put("id", cell.getId())
-                        .put("config", gson.toJson(cell.getConfig()))
-                        .put("sexuate", cell instanceof game.entity.cell.SexuateCell)
-                );
+                        .put("config", new JSONObject()
+                                .put("fpr", cell.getConfig().foodPerReproduce)
+                                .put("time_full", cell.getConfig().timeFull)
+                                .put("time_starve", cell.getConfig().timeStarve))
+                        .put("type", cell instanceof game.entity.cell.SexuateCell));
     };
 }

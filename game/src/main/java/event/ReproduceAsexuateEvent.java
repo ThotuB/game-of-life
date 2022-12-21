@@ -7,13 +7,13 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 public class ReproduceAsexuateEvent implements IEvent {
-    private AsexuateCell cell;
+    private final AsexuateCell cell;
 
     public ReproduceAsexuateEvent(AsexuateCell cell) {
         this.cell = cell;
     }
 
-    public JSONObject generate() throws JSONException {
+    public JSONObject generate() {
         GsonBuilder builder = new GsonBuilder();
         Gson gson = builder.create();
 

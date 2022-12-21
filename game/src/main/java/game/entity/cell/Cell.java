@@ -4,13 +4,11 @@ import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Stopwatch;
 
-import event.SimpleEvent;
-import event.SpawnEvent;
+import event.factory.EventFactory;
 import game.Game;
 import game.entity.Entity;
 import game.entity.food.Food;
 
-import org.json.JSONObject;
 import utils.generator.Generate;
 import utils.logger.Logger;
 
@@ -89,26 +87,16 @@ public abstract class Cell extends Entity implements Runnable {
     }
 
     private void starveCell() {
-        try{
-            JSONObject json = SimpleEvent.generate(this, "starve");
-            game.client.sendJson(json);
-        }catch(Exception e) {
-            System.out.println(e.getMessage());
-        }
         Logger.log(this + " is starving");
         state = State.STARVING;
         restartStopwatch();
+        game.client.sendJson(EventFactory.createCellEvent("starve", this));
     }
 
     private void satiateCell() {
-        try{
-            JSONObject json = SimpleEvent.generate(this, "satiate");
-            game.client.sendJson(json);
-        }catch(Exception e) {
-            System.out.println(e.getMessage());
-        }
         state = State.FULL;
         restartStopwatch();
+        game.client.sendJson(EventFactory.createCellEvent("satiate", this));
     }
 
     private boolean canReproduce() {
@@ -122,12 +110,7 @@ public abstract class Cell extends Entity implements Runnable {
             return;
 
         foodConsumed++;
-        try{
-            JSONObject json = SimpleEvent.generate(this, "eat");
-            game.client.sendJson(json);
-        }catch(Exception e) {
-            System.out.println(e.getMessage());
-        }
+        game.client.sendJson(EventFactory.createCellEvent("eat", this));
         Logger.log(this + " ate " + food
                 + " (\u001B[32m" + foodConsumed + "\u001B[0m /"
                 + " \u001B[32m" + config.foodPerReproduce + "\u001B[0m)");
@@ -160,30 +143,19 @@ public abstract class Cell extends Entity implements Runnable {
         try {
             reproduce();
 
-        }catch(Exception e) {
+        } catch (Exception e) {
             System.out.println(e);
         }
     }
 
     protected void die() {
         game.killCell(this);
-        try{
-            JSONObject json = SimpleEvent.generate(this, "die");
-            game.client.sendJson(json);
-        }catch(Exception e) {
-            System.out.println(e.getMessage());
-        }
+        game.client.sendJson(EventFactory.createCellEvent("die", this));
     }
 
     @Override
     public void run() {
-        try{
-            JSONObject json = SpawnEvent.generate(this);
-            //System.out.println(json);
-            game.client.sendJson(json);
-        }catch(Exception e) {
-            System.out.println(e.getMessage());
-        }
+        game.client.sendJson(EventFactory.createSpawnEvent(this));
         Logger.log(this + " is living");
 
         stopwatch.start();
@@ -224,6 +196,7 @@ public abstract class Cell extends Entity implements Runnable {
     public Config getConfig() {
         return config;
     }
+
     public int getFoodConsumed() {
         return foodConsumed;
     }
