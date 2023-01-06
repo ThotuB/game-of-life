@@ -10,31 +10,23 @@ import game.entity.cell.AsexuateCell;
 import game.entity.cell.Cell;
 import game.entity.cell.SexuateCell;
 import game.entity.food.Food;
+import utils.colors.Colors;
 import utils.logger.Logger;
+import utils.mating_queue.MatingQueue;
 
 public class Game {
-    public static final class Config {
-        public final int numSexuateCells;
-        public final int numAsexuateCells;
-        public final int numFood;
+    public static final int TICK = 50;
 
-        public Config(
-                int numSexuateCells,
-                int numAsexuateCells,
-                int numFood) {
-            this.numSexuateCells = numSexuateCells;
-            this.numAsexuateCells = numAsexuateCells;
-            this.numFood = numFood;
-        }
+    public record Config(int numSexuateCells, int numAsexuateCells, int numFood) {
     }
 
-    private ArrayList<Cell> cells;
-    private ArrayList<Food> foods;
+    private final ArrayList<Cell> cells;
+    private final ArrayList<Food> foods;
 
     public final Client client = new Client();
 
     // Concurrency
-    private ConcurrentLinkedQueue<SexuateCell> matingQueue = new ConcurrentLinkedQueue<>();
+    private final MatingQueue matingQueue = new MatingQueue(this);
 
     ExecutorService executor = Executors.newCachedThreadPool();
     private final Lock cellLock = new ReentrantLock();
@@ -59,11 +51,10 @@ public class Game {
             foods.add(new Food());
         }
 
-        client.sendJson(EventFactory.gameStartedEvent(
-                (int)cells.stream().filter(c -> c instanceof SexuateCell).count(),
-                (int)cells.stream().filter(c -> c instanceof AsexuateCell).count(),
-                foods.size()
-        ));
+        client.send(EventFactory.gameStartedEvent(
+                config.numSexuateCells,
+                config.numAsexuateCells,
+                config.numFood));
 
     }
 
@@ -74,10 +65,7 @@ public class Game {
                 return null;
             }
 
-            Food food = foods.remove(getRandomFood());
-            // statistics.numFood--;
-
-            return food;
+            return foods.remove(getRandomFood());
         } catch (Exception e) {
             return null;
         } finally {
@@ -85,30 +73,11 @@ public class Game {
         }
     }
 
-    // region Cell Count Methods
-    private void decrementCellCount(Cell cell) {
-        if (cell instanceof SexuateCell) {
-            // statistics.numSexuateCells--;
-        } else if (cell instanceof AsexuateCell) {
-            // statistics.numAsexuateCells--;
-        }
-    }
-
-    private void incrementCellCount(Cell cell) {
-        if (cell instanceof SexuateCell) {
-            // statistics.numSexuateCells++;
-        } else if (cell instanceof AsexuateCell) {
-            // statistics.numAsexuateCells++;
-        }
-    }
-    // endregion
-
     // region Cell Lifecycle Methods
     public void spawnCell(Cell cell) {
         cellLock.lock();
         try {
             cells.add(cell);
-            incrementCellCount(cell);
 
             executor.execute(cell);
         } finally {
@@ -123,9 +92,8 @@ public class Game {
         cellLock.lock();
         try {
             cells.remove(cell);
-            client.sendJson(EventFactory.cellDiedEvent(cell, numFoodSpawn));
-            Logger.log(cell + " died (\u001B[31m" + cells.size() + " left\u001B[0m) -> +" + numFoodSpawn + " food");
-            decrementCellCount(cell);
+            client.send(EventFactory.cellDiedEvent(cell, numFoodSpawn));
+            Logger.log(cell + " died (" + Colors.R + cells.size() + " left" + Colors.X + ") -> +" + numFoodSpawn + " food");
 
         } finally {
             cellLock.unlock();
@@ -136,7 +104,7 @@ public class Game {
             executor.shutdown();
             cell.printDetails();
 
-            client.sendJson(EventFactory.createEvent("exit"));
+            client.send(EventFactory.createEvent("exit"));
             System.exit(0);
             return;
         }
@@ -146,7 +114,6 @@ public class Game {
         try {
             for (int i = 0; i < numFoodSpawn; i++) {
                 foods.add(new Food());
-                // statistics.numFood++;
             }
         } finally {
             foodLock.unlock();
@@ -157,6 +124,10 @@ public class Game {
     public void simulate() {
         System.out.println("--- Simulation ---");
 
+        // start mating queue
+        executor.execute(matingQueue);
+
+        // start cells
         for (Cell cell : cells) {
             executor.execute(cell);
         }

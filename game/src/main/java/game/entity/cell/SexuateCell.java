@@ -1,52 +1,42 @@
 package game.entity.cell;
 
-import event.factory.EventFactory;
 import game.Game;
 import utils.logger.Logger;
-
-import java.util.concurrent.ConcurrentLinkedQueue;
+import utils.mating_queue.MatingQueue;
 
 public class SexuateCell extends Cell {
-    private final ConcurrentLinkedQueue<SexuateCell> matingQueue;
+    private final MatingQueue matingQueue;
+    private boolean isTryingToMate = false;
 
-    public SexuateCell(Game game, Config config, ConcurrentLinkedQueue<SexuateCell> matingQueue) {
+    public SexuateCell(Game game, Config config, MatingQueue matingQueue) {
         super(game, config);
         this.matingQueue = matingQueue;
     }
 
-    public SexuateCell(Game game, Config config, ConcurrentLinkedQueue<SexuateCell> matingQueue, State state) {
+    public SexuateCell(Game game, Config config, MatingQueue matingQueue, State state) {
         super(game, config, state);
         this.matingQueue = matingQueue;
     }
 
     @Override
-    public void reproduce()  {
-        if (matingQueue.stream().findAny().isEmpty()) {
-            matingQueue.add(this);
-            Logger.log(this + " waiting for a partner");
+    public void reproduce() {
+        if (isTryingToMate) {
             return;
         }
-        SexuateCell partner = matingQueue.stream().findAny().get();
+        Logger.log(this + " is trying to mate");
+        isTryingToMate = true;
+        matingQueue.add(this);
+    }
 
-        if (partner == this) {
-            return;
-        }
-        matingQueue.remove(this);
-
-        var child = new SexuateCell(game, Config.random(), matingQueue, State.STARVING);
-
-        game.client.sendJson(EventFactory.createReproduceSexuateEvent(this, partner));
-
-        Logger.log(this + " and " + partner + " reproducing -> " + child);
-        game.spawnCell(child);
-
+    public void hasReproduced() {
+        isTryingToMate = false;
         super.reproduce();
     }
 
     @Override
     protected void die() {
-        super.die();
         matingQueue.remove(this);
+        super.die();
     }
 
     @Override

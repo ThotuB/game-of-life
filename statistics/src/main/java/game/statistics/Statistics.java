@@ -2,23 +2,23 @@ package game.statistics;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Objects;
 
+import com.google.gson.Gson;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.DeliverCallback;
 
-import org.json.JSONException;
+import event.*;
 import org.json.JSONObject;
+import utils.colors.Colors;
 
 public class Statistics {
     private static final String QUEUE_NAME = "GAME";
     private boolean running = true;
 
-    class CellStats {
+    static class CellStats {
         enum State {
             FULL, STARVING, DEAD
         }
@@ -47,16 +47,23 @@ public class Statistics {
         }
     }
 
-    class GameStats {
-        public int numCells = 0;
-        public int numFood = 0;
-        public int numSexuateCells = 0;
-        public int numAsexuateCells = 0;
+    static class GameStats {
+        public int numCells;
+        public int numFood;
+        public int numSexuateCells;
+        public int numAsexuateCells;
 
-        public HashMap<Integer, CellStats> cellStats = new HashMap<>();
+        public GameStats(int numSexuateCells, int numAsexuateCells, int numFood, int numCells) {
+            this.numSexuateCells = numSexuateCells;
+            this.numAsexuateCells = numAsexuateCells;
+            this.numFood = numFood;
+            this.numCells = numCells;
+        }
+
+        public final HashMap<Integer, CellStats> cellStats = new HashMap<>();
     }
 
-    private GameStats gameStats = new GameStats();
+    private GameStats gameStats;
 
     public Statistics() {
     }
@@ -78,8 +85,7 @@ public class Statistics {
 
     private void callbackLoop(Channel channel) throws IOException {
         DeliverCallback callback = ((consumerTag, delivery) -> {
-            // processMessage(new String(delivery.getBody(), StandardCharsets.UTF_8));
-            processMessageJSON(new String(delivery.getBody(), StandardCharsets.UTF_8));
+            processMessage(new String(delivery.getBody(), StandardCharsets.UTF_8));
         });
 
         while (running) {
@@ -88,68 +94,66 @@ public class Statistics {
         }
     }
 
-    private void processMessageJSON(String jsonString) {
-
-        JSONObject obj = new JSONObject(jsonString);
-        String type = obj.getString("type");
+    private void processMessage(String event) {
+        Gson gson = new Gson();
+        String type = new JSONObject(event).getString("type");
 
         switch (type) {
             case "game-started" -> {
-                gameStats.numSexuateCells = obj.getInt("num_sexuate");
-                gameStats.numAsexuateCells = obj.getInt("num_asexuate");
-                gameStats.numFood = obj.getInt("num_food");
-                gameStats.numCells = obj.getInt("total_cells");
+                GameStartedDto eventObj = gson.fromJson(event, GameStartedDto.class);
+
+                gameStats = new GameStats(
+                        eventObj.num_sexuate(),
+                        eventObj.num_asexuate(),
+                        eventObj.num_food(),
+                        eventObj.num_sexuate() + eventObj.num_asexuate());
             }
             case "spawn" -> {
-                JSONObject cell = obj.getJSONObject("cell");
-                int cellId = cell.getInt("id");
-                JSONObject config = cell.getJSONObject("config");
-                int fpr = config.getInt("fpr");
-                int tFull = config.getInt("time_full");
-                int tStarve = config.getInt("time_starve");
-                boolean sexuate = cell.getBoolean("type");
+                SpawnDto eventObj = gson.fromJson(event, SpawnDto.class);
 
-                gameStats.cellStats.put(cellId, new CellStats(cellId, fpr, tFull, tStarve, sexuate));
+                gameStats.cellStats.put(
+                        eventObj.cell().id(),
+                        new CellStats(
+                                eventObj.cell().id(),
+                                eventObj.cell().config().fpr(),
+                                eventObj.cell().config().time_full(),
+                                eventObj.cell().config().time_starve(),
+                                eventObj.cell().type()));
             }
             case "eat" -> {
-                int cellId = obj.getInt("cell_id");
-                gameStats.cellStats.get(cellId).foodEaten++;
+                CellDto eventObj = gson.fromJson(event, CellDto.class);
+                gameStats.cellStats.get(eventObj.cell_id()).foodEaten++;
+                gameStats.cellStats.get(eventObj.cell_id()).state = CellStats.State.FULL;
                 gameStats.numFood--;
             }
             case "reproduce-sexuate" -> {
-                int cell1Id = obj.getInt("cell_1_id");
-                int cell2Id = obj.getInt("cell_2_id");
-                gameStats.cellStats.get(cell1Id).numChildren++;
-                gameStats.cellStats.get(cell2Id).numChildren++;
+                ReproduceSexuateDto eventObj = gson.fromJson(event, ReproduceSexuateDto.class);
+                gameStats.cellStats.get(eventObj.cell_1_id()).numChildren++;
+                gameStats.cellStats.get(eventObj.cell_2_id()).numChildren++;
                 gameStats.numSexuateCells++;
                 gameStats.numCells++;
             }
             case "reproduce-asexuate" -> {
-                int cellId = obj.getInt("cell_id");
-                gameStats.cellStats.get(cellId).numChildren++;
+                ReproduceAsexuateDto eventObj = gson.fromJson(event, ReproduceAsexuateDto.class);
+                gameStats.cellStats.get(eventObj.cell_id()).numChildren++;
                 gameStats.numAsexuateCells++;
                 gameStats.numCells++;
             }
             case "cell-died" -> {
-                int cellId = obj.getInt("cell_id");
-                boolean sexuate = obj.getBoolean("cell_type");
+                CellDiedDto eventObj = gson.fromJson(event, CellDiedDto.class);
 
                 gameStats.numCells--;
-                gameStats.cellStats.get(cellId).state = CellStats.State.DEAD;
-                if (sexuate) {
+                gameStats.cellStats.get(eventObj.cell_id()).state = CellStats.State.DEAD;
+                if (eventObj.cell_type()) {
                     gameStats.numSexuateCells--;
                 } else {
                     gameStats.numAsexuateCells--;
                 }
-                gameStats.numFood += obj.getInt("created_food");
-            }
-            case "satiate" -> {
-                int cellId = obj.getInt("cell_id");
-                gameStats.cellStats.get(cellId).state = CellStats.State.FULL;
+                gameStats.numFood += eventObj.created_food();
             }
             case "starve" -> {
-                int cellId = obj.getInt("cell_id");
-                gameStats.cellStats.get(cellId).state = CellStats.State.STARVING;
+                CellDto eventObj = gson.fromJson(event, CellDto.class);
+                gameStats.cellStats.get(eventObj.cell_id()).state = CellStats.State.STARVING;
             }
             case "exit" -> running = false;
             default -> {
@@ -163,8 +167,31 @@ public class Statistics {
         new ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor();
     }
 
-    public void printStatistics() {
-        String result = "STATISTICS\n"
+    private String printCellStatistics(CellStats cell) {
+        return String.format("| %4d | %s%8s%s | %3d | %6d | %8d | %s%9s%s | %4d | %8d |\n",
+                cell.id,
+                switch (cell.type) {
+                    case SEXUATE -> Colors.C;
+                    case ASEXUATE -> Colors.B;
+                },
+                cell.type,
+                Colors.X,
+                cell.fpr,
+                cell.tFull,
+                cell.tStarve,
+                switch (cell.state) {
+                    case FULL -> Colors.G;
+                    case STARVING -> Colors.Y;
+                    case DEAD -> Colors.R;
+                },
+                cell.state,
+                Colors.X,
+                cell.foodEaten,
+                cell.numChildren);
+    }
+
+    private void printStatistics() {
+        StringBuilder result = new StringBuilder("STATISTICS\n"
                 + "===========================================================================\n"
                 + "         CELLS: " + gameStats.numCells + "\n"
                 + "          FOOD: " + gameStats.numFood + "\n"
@@ -172,15 +199,13 @@ public class Statistics {
                 + "ASEXUATE CELLS: " + gameStats.numAsexuateCells + "\n"
                 + "===========================================================================\n"
                 + "|  ID  |   TYPE   | FPR | T_FULL | T_STARVE |   STATE   | FOOD | CHILDREN |\n"
-                + "---------------------------------------------------------------------------\n";
+                + "---------------------------------------------------------------------------\n");
 
         for (CellStats cell : gameStats.cellStats.values()) {
-            result += String.format("| %4d | %8s | %3d | %6d | %8d | %9s | %4d | %8d |\n",
-                    cell.id, cell.type, cell.fpr, cell.tFull, cell.tStarve, cell.state, cell.foodEaten,
-                    cell.numChildren);
+            result.append(printCellStatistics(cell));
         }
 
-        result += "===========================================================================";
+        result.append("===========================================================================");
 
         try {
             clearConsole();

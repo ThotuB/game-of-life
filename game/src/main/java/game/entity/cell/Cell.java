@@ -9,44 +9,31 @@ import game.Game;
 import game.entity.Entity;
 import game.entity.food.Food;
 
+import utils.colors.Colors;
 import utils.generator.Generate;
 import utils.logger.Logger;
 
 public abstract class Cell extends Entity implements Runnable {
-    public static final class Config {
-        public final float eatChance; // 0.005 - 0.03
-        public final float reproduceChance; // 0.005 - 0.03
-
-        public final Integer foodPerReproduce; // 5 - 15
-
-        public final Integer timeStarve; // 2 - 5
-        public final Integer timeFull; // 2 - 8
-
-        public Config(
-                float eatChance,
-                float reproduceChance,
-                Integer foodPerReproduce,
-                Integer timeStarve,
-                Integer timeFull) {
-            this.eatChance = eatChance;
-            this.reproduceChance = reproduceChance;
-
-            this.foodPerReproduce = foodPerReproduce;
-
-            this.timeStarve = timeStarve;
-            this.timeFull = timeFull;
-        }
+    /**
+     * @param eatChance        0.005 - 0.03
+     * @param reproduceChance  0.005 - 0.03
+     * @param foodPerReproduce 5 - 15
+     * @param timeStarve       2 - 5
+     * @param timeFull         2 - 8
+     */
+    public record Config(float eatChance, float reproduceChance, Integer foodPerReproduce, Integer timeStarve,
+                         Integer timeFull) {
 
         public static Config random() {
-            return new Config(
-                    Generate.randomFloat(0.005f, 0.03f),
-                    Generate.randomFloat(0.005f, 0.03f),
-                    Generate.randomInt(5, 15),
-                    Generate.randomInt(2, 5),
-                    Generate.randomInt(2, 8));
-        }
+                return new Config(
+                        Generate.randomFloat(0.005f, 0.03f),
+                        Generate.randomFloat(0.005f, 0.03f),
+                        Generate.randomInt(5, 15),
+                        Generate.randomInt(2, 5),
+                        Generate.randomInt(2, 8));
+            }
 
-    }
+        }
 
     protected final Game game;
     private final Stopwatch stopwatch = Stopwatch.createUnstarted();
@@ -90,13 +77,12 @@ public abstract class Cell extends Entity implements Runnable {
         Logger.log(this + " is starving");
         state = State.STARVING;
         restartStopwatch();
-        game.client.sendJson(EventFactory.createCellEvent("starve", this));
+        game.client.send(EventFactory.createCellEvent("starve", this));
     }
 
     private void satiateCell() {
         state = State.FULL;
         restartStopwatch();
-        game.client.sendJson(EventFactory.createCellEvent("satiate", this));
     }
 
     private boolean canReproduce() {
@@ -110,10 +96,10 @@ public abstract class Cell extends Entity implements Runnable {
             return;
 
         foodConsumed++;
-        game.client.sendJson(EventFactory.createCellEvent("eat", this));
+        game.client.send(EventFactory.createCellEvent("eat", this));
         Logger.log(this + " ate " + food
-                + " (\u001B[32m" + foodConsumed + "\u001B[0m /"
-                + " \u001B[32m" + config.foodPerReproduce + "\u001B[0m)");
+                + " (" + Colors.G + foodConsumed + Colors.X
+                + " / " + Colors.G + config.foodPerReproduce + Colors.X + ")");
 
         satiateCell();
     }
@@ -128,7 +114,7 @@ public abstract class Cell extends Entity implements Runnable {
     }
 
     protected void reproduce() {
-        foodConsumed = 0;
+        foodConsumed -=  config.foodPerReproduce;
         starveCell();
     }
 
@@ -140,12 +126,8 @@ public abstract class Cell extends Entity implements Runnable {
 
         if (roll > config.reproduceChance)
             return;
-        try {
-            reproduce();
 
-        } catch (Exception e) {
-            System.out.println(e);
-        }
+        reproduce();
     }
 
     protected void die() {
@@ -154,7 +136,7 @@ public abstract class Cell extends Entity implements Runnable {
 
     @Override
     public void run() {
-        game.client.sendJson(EventFactory.createSpawnEvent(this));
+        game.client.send(EventFactory.createSpawnEvent(this));
         Logger.log(this + " is living");
 
         stopwatch.start();
@@ -163,23 +145,24 @@ public abstract class Cell extends Entity implements Runnable {
         while (true) {
             // Handle cell state
             switch (state) {
-                case FULL:
+                case FULL -> {
                     if (stopwatch.elapsed(TimeUnit.SECONDS) >= config.timeFull) {
                         starveCell();
                     }
-                    break;
-                case STARVING:
+                }
+                case STARVING -> {
                     if (stopwatch.elapsed(TimeUnit.SECONDS) >= config.timeStarve) {
                         state = State.DEAD;
                     }
-                    break;
-                case DEAD:
+                }
+                case DEAD -> {
                     die();
                     return;
+                }
             }
 
             // Handle cell actions
-            if (tick.elapsed(TimeUnit.MILLISECONDS) >= 50) {
+            if (tick.elapsed(TimeUnit.MILLISECONDS) >= Game.TICK) {
                 tryEat();
                 tryReproduce();
                 restartTick();

@@ -17,6 +17,8 @@ repositories {
 }
 
 dependencies {
+    implementation(project(mapOf("path" to ":game")))
+    implementation(project(mapOf("path" to ":game")))
     // Use JUnit Jupiter for testing.
     testImplementation("org.junit.jupiter:junit-jupiter:5.9.0")
 

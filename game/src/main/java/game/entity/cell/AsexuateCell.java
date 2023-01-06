@@ -2,6 +2,7 @@ package game.entity.cell;
 
 import event.factory.EventFactory;
 import game.Game;
+import utils.colors.Colors;
 import utils.logger.Logger;
 
 public class AsexuateCell extends Cell {
@@ -17,9 +18,9 @@ public class AsexuateCell extends Cell {
     public void reproduce() {
         var cell = new AsexuateCell(game, Config.random(), State.STARVING);
 
-        game.client.sendJson(EventFactory.createReproduceAsexuateEvent(this));
+        game.client.send(EventFactory.createReproduceAsexuateEvent(this));
 
-        Logger.log(this + " is dividing -> " + cell);
+        Logger.log(this + " is " + Colors.C + "dividing" + Colors.X + " -> " + cell);
         game.spawnCell(cell);
 
         super.reproduce();
